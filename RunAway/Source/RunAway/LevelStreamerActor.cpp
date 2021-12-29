@@ -41,11 +41,8 @@ void ALevelStreamerActor::BeginPlay()
 	// Game Starts
 	Super::BeginPlay();
 
-	// Create Graph wih the custom filter list
-	ALevelStreamerActor::CreateGraph(GraphSize, FilterMap);
-
-	// Create the map with the custom stream levels
-	ALevelStreamerActor::CreateStreamLevel(GraphSize, LevelToLoad, TileSize);
+	// Create the stream level with out info
+	ALevelStreamerActor::CreateStreamLevel(GraphSize, GraphLevelObject, TileSize);
 }
 
 
@@ -64,6 +61,13 @@ void ALevelStreamerActor::LoadDataTables()
 		LevelStreamerDataTable = LevelStreamerDataObject.Object;
 	}
 
+	// Load the data base GraphLevelDataTable
+	static ConstructorHelpers::FObjectFinder<UDataTable> GraphLevelDataObject(TEXT("DataTable'/Game/BE/DataBases/LevelStremerData/LevelGraph.LevelGraph'"));
+	if (GraphLevelDataObject.Succeeded())
+	{
+		GraphLevelDataTable = GraphLevelDataObject.Object;
+	}
+
 }
 
 //---------------------------------------------------------------------------
@@ -73,16 +77,58 @@ void ALevelStreamerActor::LoadDataTables()
 void ALevelStreamerActor::MergeDataTables()
 {
 	if (LevelStreamerDataTable)
-	{		
-		int proceduralLevelId = FMath::RandRange(0, 4);
-		static const FString context(TEXT("LevelStreamerObject Context"));
+	{	
+		// Get a Random value from the table to load a level
+		int proceduralLevelId = 1; //FMath::RandRange(1, LevelStreamerDataTable->GetRowNames().Num());
+
+		// Create context for the Find row parameter
+		static const FString levelStreamerDataBasecontext(TEXT("LevelStreamerDataTable Context"));
+
+		// Find the index inside the database and read the values
 		FString rowNameToLoad = FString::Printf(TEXT("ProceduralLevel_%d"), proceduralLevelId);
+		FLevelStreamerObject* LevelStreamerObject = LevelStreamerDataTable->FindRow<FLevelStreamerObject>(*rowNameToLoad, levelStreamerDataBasecontext, true);
 
-		FLevelStreamerObject* LevelStreamerObject = LevelStreamerDataTable->FindRow<FLevelStreamerObject>(*rowNameToLoad, context, true);
-
+		// Load the level graph related with the level id
 		if (LevelStreamerObject)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Level Loaded:  %d"), LevelStreamerObject->ProceduralLevelId);
+			UE_LOG(LogTemp, Warning, TEXT("Level to Load:  %d"), proceduralLevelId);
+
+			// Set the initial values for the graph and tile size
+			GraphSize = LevelStreamerObject->GraphSize;
+			TileSize = LevelStreamerObject->TilesSize;
+
+			// If the table is loaded then we ask for the info
+			if (GraphLevelDataTable)
+			{
+				// Create context for the Find row parameter
+				static const FString graphLevelDataBasecontext(TEXT("GraphLevelDataTable Context"));
+
+				// Get the list of indexis
+				TArray<FName> listOfRows = GraphLevelDataTable->GetRowNames();
+
+				// grapObject ref
+				FGraphLevelObject* graphObject;
+
+				// Check the part of the map that will be loaded
+				for (int i = 0; i < listOfRows.Num(); i++)
+				{
+					// Key of the row id
+					FString RowKeyId = listOfRows[i].ToString();
+
+					// We found our row
+					graphObject = GraphLevelDataTable->FindRow<FGraphLevelObject>(*RowKeyId, graphLevelDataBasecontext, true);
+
+					// check that are the correct ones for our selected level id
+					if (graphObject->ProceduralLevelId == proceduralLevelId)
+					{
+						UE_LOG(LogTemp, Warning, TEXT("Level part added %s"), *graphObject->LevelName);
+
+						// Create the map with the custom stream levels
+						GraphLevelObject.Add(i, *graphObject);
+					}
+				}
+				UE_LOG(LogTemp, Warning, TEXT("Total size of parts to load %d"), GraphLevelObject.Num());
+			}
 		}
 	}
 }
@@ -91,77 +137,72 @@ void ALevelStreamerActor::MergeDataTables()
 //---------------------------------------------------------------------------
 // Creates the map with the custom graph
 //---------------------------------------------------------------------------
-void ALevelStreamerActor::CreateStreamLevel(int graphSize, FName levelToLoad, float tileSize)
+void ALevelStreamerActor::CreateStreamLevel(int graphSize, TMap<int, FGraphLevelObject>& levelChunkMap, float tileSize)
 {
+	FGraphLevelObject* grapLevelObject;
 	int count = 0;
-	for (size_t i = 0; i < graphSize; i++)
+	do
 	{
-		for (size_t j = 0; j < graphSize; j++)
+		if (levelChunkMap.Find(count))
 		{
+			grapLevelObject = levelChunkMap.Find(count);
+
 			// Call the function to initialize the stream levels on the correct position
-			LoadStreamLevel(levelToLoad, count, i , j);
+			LoadStreamLevel(*grapLevelObject->LevelName, count, grapLevelObject->Index_X, grapLevelObject->Index_Y, grapLevelObject->Rotation_X, grapLevelObject->Rotation_Y, grapLevelObject->Rotation_Z);
 
-			// count the number of Levels been loaded
 			count++;
-
-			// Check out last case
-			if (count == graphSize * graphSize)
-			{
-				// Call the function to initialize the stream levels on the correct position
-				LoadStreamLevel(levelToLoad, count, i, j);
-			}
 		}
-	}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Level Chunk Failed to load, its seems is missing from DB on id %d"), count);
+			count++;
+		}
+	} while (count < levelChunkMap.Num());
 }
+
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-// Creates the custom graph with the filter list
+// Creates the graph with the values from the custom map
 //---------------------------------------------------------------------------
-void ALevelStreamerActor::LoadStreamLevel(FName levelToLoad, int count, int index_X, int index_Y)
+void ALevelStreamerActor::LoadStreamLevel(FName levelToLoad, int count, int index_X, int index_Y, float rotation_X, float rotation_Y, float rotation_Z)
 {
 	ULevelStreaming* level = UGameplayStatics::GetStreamingLevel(OwningWorld, levelToLoad);
 
 	//Create the name instance
-	FString nameInstance = FString::Printf(TEXT("%s_%d"), *LevelToLoad.ToString(), count);
+	FString nameInstance = FString::Printf(TEXT("%s_%d_x_%d_y"), *levelToLoad.ToString(), index_X, index_Y);
+
+	ULevelStreaming* levelRef = level->CreateInstance(nameInstance);
+
+	UGameplayStatics::UnloadStreamLevel(OwningWorld, levelToLoad, FLatentActionInfo(), true);
 
 	// Set the new position
 	int NewPosition_X = (GraphSize * index_X) * (TileSize / 2);
 	int NewPosition_Y = (GraphSize * index_Y) * (TileSize / 2);
 
+	// Vector that stores the new position
 	FVector position;
 	position.Set(NewPosition_X, NewPosition_Y, 0);
 
-	// Log the instance been loaded, the position on the map and the value of the index i, j
-	UE_LOG(LogTemp, Warning, TEXT("Instance name: %s , Position: %f on X, %f on Y, %f on Z, Index_X : %d , Index_Y : %d "), *nameInstance, position.X, position.Y, position.Z, index_X, index_Y);
-
-	// Transform the position for the instance
+	//// Transform the position for the instance
 	FTransform newTransform;
-	newTransform.SetTranslation(position);
+	newTransform.SetLocation(position);
+	newTransform.SetRotation(FQuat(FRotator(rotation_X, rotation_Z, rotation_Y)));
 
-	// Create instance of streaming level
-	level->CreateInstance(nameInstance);
+	// Log the instance been loaded, the position on the map and the value of the index i, j
+	UE_LOG(LogTemp, Warning, TEXT("Instance name: %s , Position: %f on X, %f on Y, %f on Z, Index_X : %d , Index_Y : %d"), *nameInstance, position.X, position.Y, position.Z, index_X, index_Y);
 
 	//Assign a new transform to our level
-	level->LevelTransform = newTransform;
+	levelRef->LevelTransform = newTransform;
+
+	UE_LOG(LogTemp, Warning, TEXT("New Location: %s"), *levelRef->LevelTransform.GetLocation().ToString());
+
+	levelRef->SetShouldBeLoaded(true);
+
+	levelRef->SetShouldBeVisible(true);
 
 	// Load the stream level
 	FLatentActionInfo info;
 	info.UUID = count;
 
-	UGameplayStatics::LoadStreamLevel(OwningWorld, *nameInstance, true, false, info);
-}
-
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-// Creates the custom graph with the filter list
-//---------------------------------------------------------------------------
-void ALevelStreamerActor::CreateGraph(int graphSize, TMap<int32, FString> filterMap)
-{
-	for (size_t i = 0; i < graphSize; i++)
-	{
-		for (size_t j = 0; j < graphSize; j++)
-		{
-
-		}
-	}
+	UGameplayStatics::LoadStreamLevel(OwningWorld, *nameInstance, true, true, info);
 }
