@@ -13,5 +13,9 @@ UCLASS()
 class RUNAWAY_API ARunAwayGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
-	
+
+	public:
+
+		// Constructor
+		ARunAwayGameModeBase();
 };

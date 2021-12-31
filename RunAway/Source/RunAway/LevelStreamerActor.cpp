@@ -6,6 +6,7 @@
 #include "Engine/LevelStreaming.h"
 #include "Kismet/GameplayStatics.h"
 #include "UObject/ConstructorHelpers.h"
+#include "GameFramework/Controller.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 
@@ -23,19 +24,11 @@ ALevelStreamerActor::ALevelStreamerActor()
 }
 
 //---------------------------------------------------------------------------
-//	Tick
-//---------------------------------------------------------------------------
-void ALevelStreamerActor::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
-//---------------------------------------------------------------------------
 //	Begin Play
 //---------------------------------------------------------------------------
 void ALevelStreamerActor::BeginPlay()
 {
+	// Get the ref to out world we are in
 	OwningWorld = GetWorld();
 
 	// Game Starts
@@ -44,7 +37,6 @@ void ALevelStreamerActor::BeginPlay()
 	// Create the stream level with out info
 	ALevelStreamerActor::CreateStreamLevel(GraphSize, GraphLevelObject, TileSize);
 }
-
 
 //---------------------------------------------------------------------------
 //	PRIVATE
@@ -67,7 +59,6 @@ void ALevelStreamerActor::LoadDataTables()
 	{
 		GraphLevelDataTable = GraphLevelDataObject.Object;
 	}
-
 }
 
 //---------------------------------------------------------------------------
@@ -121,12 +112,14 @@ void ALevelStreamerActor::MergeDataTables()
 					// check that are the correct ones for our selected level id
 					if (graphObject->ProceduralLevelId == proceduralLevelId)
 					{
+						// Log
 						UE_LOG(LogTemp, Warning, TEXT("Level part added %s"), *graphObject->LevelName);
 
 						// Create the map with the custom stream levels
 						GraphLevelObject.Add(i, *graphObject);
 					}
 				}
+				// Log
 				UE_LOG(LogTemp, Warning, TEXT("Total size of parts to load %d"), GraphLevelObject.Num());
 			}
 		}
@@ -135,25 +128,32 @@ void ALevelStreamerActor::MergeDataTables()
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-// Creates the map with the custom graph
+// Creates the graph for each level streamer that need to be loaded into the world
 //---------------------------------------------------------------------------
 void ALevelStreamerActor::CreateStreamLevel(int graphSize, TMap<int, FGraphLevelObject>& levelChunkMap, float tileSize)
 {
+	// Ref to out graph level object
 	FGraphLevelObject* grapLevelObject;
+
+	// init count of chunks to be loaded
 	int count = 0;
+
+	// loop throught the array of chunks we need to load
 	do
 	{
+		// if we found the chunk inside our map we procede to load that chunk
 		if (levelChunkMap.Find(count))
 		{
+			// Get the Ref of our object so we can manipulate the data
 			grapLevelObject = levelChunkMap.Find(count);
 
 			// Call the function to initialize the stream levels on the correct position
 			LoadStreamLevel(*grapLevelObject->LevelName, count, grapLevelObject->Index_X, grapLevelObject->Index_Y, grapLevelObject->Rotation_X, grapLevelObject->Rotation_Y, grapLevelObject->Rotation_Z);
-
 			count++;
 		}
 		else
 		{
+			// Log our failure case to notify that we are missing something in out data base
 			UE_LOG(LogTemp, Warning, TEXT("Level Chunk Failed to load, its seems is missing from DB on id %d"), count);
 			count++;
 		}
@@ -162,47 +162,57 @@ void ALevelStreamerActor::CreateStreamLevel(int graphSize, TMap<int, FGraphLevel
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-// Creates the graph with the values from the custom map
+// Load each stream level into out level graph
 //---------------------------------------------------------------------------
 void ALevelStreamerActor::LoadStreamLevel(FName levelToLoad, int count, int index_X, int index_Y, float rotation_X, float rotation_Y, float rotation_Z)
 {
+	// The information of our level we want to load
 	ULevelStreaming* level = UGameplayStatics::GetStreamingLevel(OwningWorld, levelToLoad);
 
-	//Create the name instance
-	FString nameInstance = FString::Printf(TEXT("%s_%d_x_%d_y"), *levelToLoad.ToString(), index_X, index_Y);
+	if (level)
+	{
+		// Create the name instance
+		FString nameInstance = FString::Printf(TEXT("%s_%d_x_%d_y"), *levelToLoad.ToString(), index_X, index_Y);
 
-	ULevelStreaming* levelRef = level->CreateInstance(nameInstance);
+		ULevelStreaming* levelRef = level->CreateInstance(nameInstance);
 
-	UGameplayStatics::UnloadStreamLevel(OwningWorld, levelToLoad, FLatentActionInfo(), true);
+		UGameplayStatics::UnloadStreamLevel(OwningWorld, levelToLoad, FLatentActionInfo(), true);
 
-	// Set the new position
-	int NewPosition_X = (GraphSize * index_X) * (TileSize / 2);
-	int NewPosition_Y = (GraphSize * index_Y) * (TileSize / 2);
+		// Set the new position and rotation
+		int NewPosition_X = (GraphSize * index_X) * (TileSize / 2);
+		int NewPosition_Y = (GraphSize * index_Y) * (TileSize / 2);
 
-	// Vector that stores the new position
-	FVector position;
-	position.Set(NewPosition_X, NewPosition_Y, 0);
+		// Create the new rotation and get the direction
+		const FRotator YawRotation(rotation_X, rotation_Y, rotation_Z);
+		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
-	//// Transform the position for the instance
-	FTransform newTransform;
-	newTransform.SetLocation(position);
-	newTransform.SetRotation(FQuat(FRotator(rotation_X, rotation_Z, rotation_Y)));
+		// Vector that stores the new position
+		FVector position;
+		position.Set(NewPosition_X, NewPosition_Y, 0);
 
-	// Log the instance been loaded, the position on the map and the value of the index i, j
-	UE_LOG(LogTemp, Warning, TEXT("Instance name: %s , Position: %f on X, %f on Y, %f on Z, Index_X : %d , Index_Y : %d"), *nameInstance, position.X, position.Y, position.Z, index_X, index_Y);
+		// Transform the position for the instance
+		FTransform newTransform;
+		newTransform.SetToRelativeTransform(levelRef->LevelTransform);
+		newTransform.SetRotation(Direction.ToOrientationQuat());
+		newTransform.SetLocation(position);
 
-	//Assign a new transform to our level
-	levelRef->LevelTransform = newTransform;
+		// Log the instance been loaded, the position on the map and the value of the index i, j
+		UE_LOG(LogTemp, Warning, TEXT("Instance name: %s , Position: %f on X, %f on Y, %f on Z, Index_X : %d , Index_Y : %d"), *nameInstance, position.X, position.Y, position.Z, index_X, index_Y);
 
-	UE_LOG(LogTemp, Warning, TEXT("New Location: %s"), *levelRef->LevelTransform.GetLocation().ToString());
+		//Assign a new transform to our level
+		levelRef->LevelTransform = newTransform;
 
-	levelRef->SetShouldBeLoaded(true);
+		UE_LOG(LogTemp, Warning, TEXT("New Location: %s"), *levelRef->LevelTransform.GetLocation().ToString());
 
-	levelRef->SetShouldBeVisible(true);
+		// Load the stream level
+		FLatentActionInfo info;
+		info.UUID = count;
 
-	// Load the stream level
-	FLatentActionInfo info;
-	info.UUID = count;
-
-	UGameplayStatics::LoadStreamLevel(OwningWorld, *nameInstance, true, true, info);
+		UGameplayStatics::LoadStreamLevel(OwningWorld, *nameInstance, true, false, info);
+	}
+	else
+	{
+		// probably the name of the level we are currently loading is missing or isnt created
+		UE_LOG(LogTemp, Warning, TEXT("Failed to load the: %s level name or this is intentionally"), *levelToLoad.ToString());
+	}
 }
