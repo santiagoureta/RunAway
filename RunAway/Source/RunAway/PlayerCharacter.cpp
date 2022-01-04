@@ -1,16 +1,18 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+// Copyright 2021 - 25/12/2021 - Santiago Ureta - RunAway
 
 #include "PlayerCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
-#include "Components/StaticmeshComponent.h"
-
+#include "Animation/AnimInstance.h"
+#include "Engine/Engine.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 
+//---------------------------------------------------------------------------
+// Player Constructor
+//---------------------------------------------------------------------------
 APlayerCharacter::APlayerCharacter()
 {
  	// Set this character to call Tick() every frame.
@@ -21,40 +23,34 @@ APlayerCharacter::APlayerCharacter()
 	FollowCamera->SetupAttachment(RootComponent);
 	FollowCamera->bUsePawnControlRotation = true;
 
-	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Static Mesh Player"));
-	MeshComponent->SetupAttachment(RootComponent);
+	// Configure character movement
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.f, 0.0f);
+	GetCharacterMovement()->MaxWalkSpeed = PlayerMaxWalkSpeed;
+	PlayerIsRunning = false;
 
-	//// Dont rotate when the controller rotates, let just affect the camera instead
-	//bUseControllerRotationPitch = false;
-	//bUseControllerRotationRoll = false;
-	//bUseControllerRotationYaw = false;
-
-	//// Configure character movement
-	//GetCharacterMovement()->bOrientRotationToMovement = true;
-	//GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.f, 0.0f);
-
-	////Create arm for the camera
-	////CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	////CameraBoom->SetupAttachment(RootComponent);
-	////CameraBoom->TargetArmLength = 0.0f; // The camera follows at this distance behind the character	
-	////CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
-	//
-	
 }
 
-// Called when the game starts or when spawned
+//---------------------------------------------------------------------------
+// BEGIN PLAY
+//---------------------------------------------------------------------------
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();	
 }
 
-// Called every frame
+//---------------------------------------------------------------------------
+// TICK
+//---------------------------------------------------------------------------
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	IsPlayerRunning();
 }
 
+//---------------------------------------------------------------------------
 // Called to bind functionality to input
+//---------------------------------------------------------------------------
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -66,25 +62,35 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerYawInput);
 
 	// Player Actions
-	/*PlayerInputComponent->BindAction("Run", IE_Pressed, this, &APlayerCharacter::Run);
-	PlayerInputComponent->BindAction("Run", IE_Released, this, &APlayerCharacter::Run);*/
+	PlayerInputComponent->BindAction("Run", IE_Pressed, this, &APlayerCharacter::StartRunning);
+	PlayerInputComponent->BindAction("Run", IE_Released, this, &APlayerCharacter::StopRunning);
 }
 
 //---------------------------------------------------------------------------
 //	PRIVATE
 //---------------------------------------------------------------------------
+// Update the config for the MoveForward state
+//---------------------------------------------------------------------------
+void APlayerCharacter::IsPlayerRunning()
+{
+	//TODO: Implement IsRunning Method
+}
+
+//---------------------------------------------------------------------------
 // Manage the movement from the player (FORWARD - BACKWARDS)
 //---------------------------------------------------------------------------
 void APlayerCharacter::MoveForward(float Value)
 {
-	if ((Controller != NULL))
+	if ((Controller != NULL) && Value != 0.f)
 	{
-		// find out which way is forward
+		// Find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
-		// get forward vector
+		// Get forward vector
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+
+		// Add movement in that direction
 		AddMovementInput(Direction, Value);
 	}
 }
@@ -94,7 +100,7 @@ void APlayerCharacter::MoveForward(float Value)
 //---------------------------------------------------------------------------
 void APlayerCharacter::MoveRight(float Value)
 {
-	if ((Controller != NULL))
+	if ((Controller != NULL) && Value != 0.f)
 	{
 		// find out which way is right
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -102,8 +108,27 @@ void APlayerCharacter::MoveRight(float Value)
 
 		// get right vector 
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
 		// add movement in that direction
 		AddMovementInput(Direction, Value);
 	}
+}
+
+//---------------------------------------------------------------------------
+// Manage the movement from the player (START RUNNING)
+//---------------------------------------------------------------------------
+void APlayerCharacter::StartRunning()
+{
+	PlayerIsRunning = true;
+	GetCharacterMovement()->MaxWalkSpeed = PlayerMaxRunSpeed;
+}
+
+//---------------------------------------------------------------------------
+// Manage the movement from the player (STOP RUNNING)
+//---------------------------------------------------------------------------
+void APlayerCharacter::StopRunning()
+{
+	PlayerIsRunning = false;
+	GetCharacterMovement()->MaxWalkSpeed = PlayerMaxWalkSpeed;
 }
 

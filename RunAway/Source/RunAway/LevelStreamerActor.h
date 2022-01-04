@@ -1,11 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright 2021 - 25/12/2021 - Santiago Ureta - RunAway
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Engine/DataTable.h"
-
 #include "LevelStreamerActor.generated.h"
 
 USTRUCT(BlueprintType)
@@ -49,7 +48,6 @@ struct FGraphLevelObject : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FString LevelName;
 };
-
 
 UCLASS()
 class RUNAWAY_API ALevelStreamerActor : public AActor
