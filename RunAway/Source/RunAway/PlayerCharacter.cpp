@@ -27,7 +27,10 @@ APlayerCharacter::APlayerCharacter()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.f, 0.0f);
 	GetCharacterMovement()->MaxWalkSpeed = PlayerMaxWalkSpeed;
+
+	// Configure character actions
 	PlayerIsRunning = false;
+	CurrentPlayerStamina = PlayerMaxStamina;
 
 }
 
@@ -46,6 +49,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	IsPlayerRunning();
+	UE_LOG(LogTemp, Warning, TEXT("Current Player Stamina %d"), CurrentPlayerStamina);
 }
 
 //---------------------------------------------------------------------------
@@ -64,6 +68,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	// Player Actions
 	PlayerInputComponent->BindAction("Run", IE_Pressed, this, &APlayerCharacter::StartRunning);
 	PlayerInputComponent->BindAction("Run", IE_Released, this, &APlayerCharacter::StopRunning);
+
 }
 
 //---------------------------------------------------------------------------
@@ -73,7 +78,32 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 //---------------------------------------------------------------------------
 void APlayerCharacter::IsPlayerRunning()
 {
-	//TODO: Implement IsRunning Method
+	// we check if the player is running
+	if (PlayerIsRunning)
+	{
+		// Substract the stamina from the player while running
+		CurrentPlayerStamina = FMath::Clamp((CurrentPlayerStamina - 1), 0, PlayerMaxStamina);
+
+		// Stop Running and add delay to the charge of the stamina
+		if (CurrentPlayerStamina == 0)
+		{
+			PlayerDelayStamina = PlayerMinStamina;
+			StopRunning();
+		}
+	}
+	else
+	{
+		// we need to delay the charge of the stamina
+		if (PlayerDelayStamina < 0)
+		{
+			PlayerDelayStamina = +FMath::Clamp((PlayerDelayStamina + 1), PlayerMinStamina, PlayerMaxStamina);
+		}
+		// If the delay stamina is 0 we can start charging the stamina of the player
+		else if (PlayerDelayStamina >= 0)
+		{
+			CurrentPlayerStamina =+ FMath::Clamp((CurrentPlayerStamina +1), PlayerMinStamina, PlayerMaxStamina);
+		}
+	}
 }
 
 //---------------------------------------------------------------------------
@@ -119,8 +149,13 @@ void APlayerCharacter::MoveRight(float Value)
 //---------------------------------------------------------------------------
 void APlayerCharacter::StartRunning()
 {
-	PlayerIsRunning = true;
-	GetCharacterMovement()->MaxWalkSpeed = PlayerMaxRunSpeed;
+	// Only start running when the stamina is greater than 0
+	if (CurrentPlayerStamina >= 0)
+	{	
+		PlayerIsRunning = true;
+		GetCharacterMovement()->MaxWalkSpeed = PlayerMaxRunSpeed;
+		UE_LOG(LogTemp, Warning, TEXT("START RUNNING"));
+	}
 }
 
 //---------------------------------------------------------------------------
@@ -130,5 +165,6 @@ void APlayerCharacter::StopRunning()
 {
 	PlayerIsRunning = false;
 	GetCharacterMovement()->MaxWalkSpeed = PlayerMaxWalkSpeed;
+	UE_LOG(LogTemp, Warning, TEXT("STOP RUNNING"));
 }
 

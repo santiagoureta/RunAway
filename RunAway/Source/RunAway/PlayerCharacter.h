@@ -42,7 +42,19 @@ private:
 	//! Player Max run speed
 	const float PlayerMaxRunSpeed = 850.f;
 
-	//! Function to check and configure if the player is running
+	//! Player Max Stamina
+	const int PlayerMaxStamina = 800;
+
+	//! Player Min Stamina
+	const int PlayerMinStamina = -150;
+
+	//! Player Min Stamina
+	int PlayerDelayStamina = 0;
+
+	//! Player Current Stamina
+	int CurrentPlayerStamina = 0;
+
+	//! Function to modify the player stamina
 	virtual void IsPlayerRunning();
 
 	//! Function that creates the forward-backwards movement for the player
