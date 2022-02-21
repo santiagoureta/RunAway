@@ -3,7 +3,9 @@
 
 #include "RunAwayGameModeBase.h"
 #include "PlayerCharacter.h"
+#include "MainClass.h"
 #include "UObject/ConstructorHelpers.h"
+
 
 ARunAwayGameModeBase::ARunAwayGameModeBase()
 {
@@ -12,5 +14,5 @@ ARunAwayGameModeBase::ARunAwayGameModeBase()
 	if (PlayerPawnBPClass.Class != NULL)
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
-	}
+	}	
 }

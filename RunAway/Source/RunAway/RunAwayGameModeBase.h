@@ -6,9 +6,6 @@
 #include "GameFramework/GameModeBase.h"
 #include "RunAwayGameModeBase.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class RUNAWAY_API ARunAwayGameModeBase : public AGameModeBase
 {

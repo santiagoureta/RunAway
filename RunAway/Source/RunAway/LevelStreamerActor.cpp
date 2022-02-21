@@ -14,36 +14,6 @@
 //---------------------------------------------------------------------------
 ALevelStreamerActor::ALevelStreamerActor()
 {
-	// Load all the tables we need for the data merging
-	ALevelStreamerActor::LoadDataTables();
-
-	// then we need to merge the values to retrieve all the information
-	ALevelStreamerActor::MergeDataTables();
-}
-
-//---------------------------------------------------------------------------
-//	Begin Play
-//---------------------------------------------------------------------------
-void ALevelStreamerActor::BeginPlay()
-{
-	// Get the ref to out world we are in
-	OwningWorld = GetWorld();
-
-	// Game Starts
-	Super::BeginPlay();
-
-	// Create the stream level with out info
-	ALevelStreamerActor::CreateStreamLevel(GraphSize, GraphLevelObject, TileSize);
-}
-
-//---------------------------------------------------------------------------
-//	PRIVATE
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-// Load the values from the data tables to create the map
-//---------------------------------------------------------------------------
-void ALevelStreamerActor::LoadDataTables()
-{
 	// Load the data base LevelStreamerDataTable
 	static ConstructorHelpers::FObjectFinder<UDataTable> LevelStreamerDataObject(TEXT("DataTable'/Game/BE/DataBases/LevelStremerData/LevelStreamer.LevelStreamer'"));
 	if (LevelStreamerDataObject.Succeeded())
@@ -60,13 +30,62 @@ void ALevelStreamerActor::LoadDataTables()
 }
 
 //---------------------------------------------------------------------------
+//	Begin Play
+//---------------------------------------------------------------------------
+void ALevelStreamerActor::BeginPlay()
+{
+	// Get the ref to out world we are in
+	OwningWorld = GetWorld();
+
+	// Game Starts
+	Super::BeginPlay();
+}
+
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+// Creates the graph for each level streamer that need to be loaded into the world
+//---------------------------------------------------------------------------
+bool ALevelStreamerActor::CreateStreamLevel()
+{
+	bool isSuccess = true;
+
+	// Ref to out graph level object
+	FGraphLevelObject* grapLevelObject;
+
+	// init count of chunks to be loaded
+	int count = 0;
+
+	// loop throught the array of chunks we need to load
+	do
+	{
+		// if we found the chunk inside our map we procede to load that chunk
+		if (GraphLevelObjectMap.Find(count))
+		{
+			// Get the Ref of our object so we can manipulate the data
+			grapLevelObject = GraphLevelObjectMap.Find(count);
+
+			// Call the function to initialize the stream levels on the correct position
+			LoadStreamLevel(*grapLevelObject->LevelName, count, grapLevelObject->Index_X, grapLevelObject->Index_Y, grapLevelObject->Rotation_X, grapLevelObject->Rotation_Y, grapLevelObject->Rotation_Z, grapLevelObject->LevelType);
+			count++;
+		}
+		else
+		{
+			// Log our failure case to notify that we are missing something in out data base
+			UE_LOG(LogTemp, Warning, TEXT("Level Chunk Failed to load, its seems is missing from DB on id %d"), count);
+			count++;
+		}
+	} while (count < GraphLevelObjectMap.Num());
+
+	return isSuccess;
+}
+
 //---------------------------------------------------------------------------
 // Load the values from the data tables to create the map
 //---------------------------------------------------------------------------
 void ALevelStreamerActor::MergeDataTables()
 {
 	if (LevelStreamerDataTable)
-	{	
+	{
 		// Get a Random value from the table to load a level
 		int proceduralLevelId = 1; //FMath::RandRange(1, LevelStreamerDataTable->GetRowNames().Num());
 
@@ -114,55 +133,24 @@ void ALevelStreamerActor::MergeDataTables()
 						UE_LOG(LogTemp, Warning, TEXT("Level part added %s"), *graphObject->LevelName);
 
 						// Create the map with the custom stream levels
-						GraphLevelObject.Add(i, *graphObject);
+						GraphLevelObjectMap.Add(i, *graphObject);
 					}
+					
 				}
 				// Log
-				UE_LOG(LogTemp, Warning, TEXT("Total size of parts to load %d"), GraphLevelObject.Num());
+				UE_LOG(LogTemp, Warning, TEXT("Total size of parts to load %d"), GraphLevelObjectMap.Num());
 			}
 		}
 	}
 }
 
 //---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-// Creates the graph for each level streamer that need to be loaded into the world
-//---------------------------------------------------------------------------
-void ALevelStreamerActor::CreateStreamLevel(int graphSize, TMap<int, FGraphLevelObject>& levelChunkMap, float tileSize)
-{
-	// Ref to out graph level object
-	FGraphLevelObject* grapLevelObject;
-
-	// init count of chunks to be loaded
-	int count = 0;
-
-	// loop throught the array of chunks we need to load
-	do
-	{
-		// if we found the chunk inside our map we procede to load that chunk
-		if (levelChunkMap.Find(count))
-		{
-			// Get the Ref of our object so we can manipulate the data
-			grapLevelObject = levelChunkMap.Find(count);
-
-			// Call the function to initialize the stream levels on the correct position
-			LoadStreamLevel(*grapLevelObject->LevelName, count, grapLevelObject->Index_X, grapLevelObject->Index_Y, grapLevelObject->Rotation_X, grapLevelObject->Rotation_Y, grapLevelObject->Rotation_Z);
-			count++;
-		}
-		else
-		{
-			// Log our failure case to notify that we are missing something in out data base
-			UE_LOG(LogTemp, Warning, TEXT("Level Chunk Failed to load, its seems is missing from DB on id %d"), count);
-			count++;
-		}
-	} while (count < levelChunkMap.Num());
-}
-
+//	PRIVATE
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 // Load each stream level into out level graph
 //---------------------------------------------------------------------------
-void ALevelStreamerActor::LoadStreamLevel(FName levelToLoad, int count, int index_X, int index_Y, float rotation_X, float rotation_Y, float rotation_Z)
+void ALevelStreamerActor::LoadStreamLevel(FName levelToLoad, int count, int index_X, int index_Y, float rotation_X, float rotation_Y, float rotation_Z, int levelType)
 {
 	// The information of our level we want to load
 	ULevelStreaming* level = UGameplayStatics::GetStreamingLevel(OwningWorld, levelToLoad);
@@ -171,6 +159,11 @@ void ALevelStreamerActor::LoadStreamLevel(FName levelToLoad, int count, int inde
 	{
 		// Create the name instance
 		FString nameInstance = FString::Printf(TEXT("%s_%d_x_%d_y"), *levelToLoad.ToString(), index_X, index_Y);
+
+		if (levelType == LevelTypeEnum::LEVEL_TYPE_STREET || levelType == LevelTypeEnum::LEVEL_TYPE_STREET_CORNER)
+		{
+			LightList.Add(*nameInstance);
+		}
 
 		ULevelStreaming* levelRef = level->CreateInstance(nameInstance);
 
