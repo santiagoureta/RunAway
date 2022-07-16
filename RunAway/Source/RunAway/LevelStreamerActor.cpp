@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "UObject/ConstructorHelpers.h"
 #include "GameFramework/Controller.h"
+#include "Main_Utilities.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 
@@ -26,6 +27,13 @@ ALevelStreamerActor::ALevelStreamerActor()
 	if (GraphLevelDataObject.Succeeded())
 	{
 		GraphLevelDataTable = GraphLevelDataObject.Object;
+	}
+
+	// Load the data base Level
+	static ConstructorHelpers::FObjectFinder<UDataTable> LevelLightsDataObject(TEXT("DataTable'/Game/BE/DataBases/LevelStremerData/LevelLights.LevelLights'"));
+	if (LevelLightsDataObject.Succeeded())
+	{
+		LevelLightsDataTable = LevelLightsDataObject.Object;
 	}
 }
 
@@ -65,7 +73,8 @@ bool ALevelStreamerActor::CreateStreamLevel()
 			grapLevelObject = GraphLevelObjectMap.Find(count);
 
 			// Call the function to initialize the stream levels on the correct position
-			LoadStreamLevel(*grapLevelObject->LevelName, count, grapLevelObject->Index_X, grapLevelObject->Index_Y, grapLevelObject->Rotation_X, grapLevelObject->Rotation_Y, grapLevelObject->Rotation_Z, grapLevelObject->LevelType);
+			LoadStreamLevel(grapLevelObject, count);
+
 			count++;
 		}
 		else
@@ -87,7 +96,7 @@ void ALevelStreamerActor::MergeDataTables()
 	if (LevelStreamerDataTable)
 	{
 		// Get a Random value from the table to load a level
-		int proceduralLevelId = 1; //FMath::RandRange(1, LevelStreamerDataTable->GetRowNames().Num());
+		proceduralLevelId = 1; //FMath::RandRange(1, LevelStreamerDataTable->GetRowNames().Num());
 
 		// Create context for the Find row parameter
 		static const FString levelStreamerDataBasecontext(TEXT("LevelStreamerDataTable Context"));
@@ -101,44 +110,17 @@ void ALevelStreamerActor::MergeDataTables()
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Level to Load:  %d"), proceduralLevelId);
 
-			// Set the initial values for the graph and tile size
-			GraphSize = LevelStreamerObject->GraphSize;
-			TileSize = LevelStreamerObject->TilesSize;
+			// Load all the information needed to define the size of the level
+			LoadGraphSize(LevelStreamerObject);
 
 			// If the table is loaded then we ask for the info
 			if (GraphLevelDataTable)
 			{
-				// Create context for the Find row parameter
-				static const FString graphLevelDataBasecontext(TEXT("GraphLevelDataTable Context"));
+				// Load the information needed for each level chunk to then be proccesed
+				LoadGraphLevelChunks();
 
-				// Get the list of indexis
-				TArray<FName> listOfRows = GraphLevelDataTable->GetRowNames();
-
-				// grapObject ref
-				FGraphLevelObject* graphObject;
-
-				// Check the part of the map that will be loaded
-				for (int i = 0; i < listOfRows.Num(); i++)
-				{
-					// Key of the row id
-					FString RowKeyId = listOfRows[i].ToString();
-
-					// We found our row
-					graphObject = GraphLevelDataTable->FindRow<FGraphLevelObject>(*RowKeyId, graphLevelDataBasecontext, true);
-
-					// check that are the correct ones for our selected level id
-					if (graphObject->ProceduralLevelId == proceduralLevelId)
-					{
-						// Log
-						UE_LOG(LogTemp, Warning, TEXT("Level part added %s"), *graphObject->LevelName);
-
-						// Create the map with the custom stream levels
-						GraphLevelObjectMap.Add(i, *graphObject);
-					}
-					
-				}
-				// Log
-				UE_LOG(LogTemp, Warning, TEXT("Total size of parts to load %d"), GraphLevelObjectMap.Num());
+				//Load the lights information needed for the level
+				LoadLevelLightsInfo();
 			}
 		}
 	}
@@ -147,27 +129,109 @@ void ALevelStreamerActor::MergeDataTables()
 //---------------------------------------------------------------------------
 //	PRIVATE
 //---------------------------------------------------------------------------
+// Load the information needed for the level to manage the size of the graph
+//---------------------------------------------------------------------------
+void ALevelStreamerActor::LoadGraphSize(FLevelStreamerObject* LevelStreamerObject)
+{
+	// Set the initial values for the graph and tile size
+	GraphSize = LevelStreamerObject->GraphSize;
+	TileSize = LevelStreamerObject->TilesSize;
+}
+
+//---------------------------------------------------------------------------
+// Load the information needed for each level chunk to then be proccesed
+//---------------------------------------------------------------------------
+void ALevelStreamerActor::LoadGraphLevelChunks()
+{
+	// Create context for the Find row parameter
+	static const FString graphLevelDataBasecontext(TEXT("GraphLevelDataTable Context"));
+
+	// Get the list of indexis
+	TArray<FName> listOfRows = GraphLevelDataTable->GetRowNames();
+
+	// grapObject ref
+	FGraphLevelObject* graphObject;
+
+	// Check the part of the map that will be loaded
+	for (int i = 0; i < listOfRows.Num(); i++)
+	{
+		// Key of the row id
+		FString RowKeyId = listOfRows[i].ToString();
+
+		// We found our row
+		graphObject = GraphLevelDataTable->FindRow<FGraphLevelObject>(*RowKeyId, graphLevelDataBasecontext, true);
+
+		// check that are the correct ones for our selected level id
+		if (graphObject->ProceduralLevelId == proceduralLevelId)
+		{
+			// Log
+			UE_LOG(LogTemp, Warning, TEXT("Level part added %s"), *graphObject->LevelName);
+
+			// Create the map with the custom stream levels
+			GraphLevelObjectMap.Add(i, *graphObject);
+		}
+	}
+
+	// Log
+	UE_LOG(LogTemp, Warning, TEXT("Total size of parts to load %d"), GraphLevelObjectMap.Num());
+}
+
+//---------------------------------------------------------------------------
+// Load the lights information needed for the level
+//---------------------------------------------------------------------------
+void ALevelStreamerActor::LoadLevelLightsInfo()
+{
+	// Load the lights data base values
+	if (LevelLightsDataTable)
+	{
+		// Create context for the Find row parameter
+		static const FString LevelLightsDataBasecontext(TEXT("LevelLightsDataTable Context"));
+
+		// Get the list of indexis
+		TArray<FName> LevelLightsRows = LevelLightsDataTable->GetRowNames();
+
+		// light object ref
+		FLevelLightStruct* lightObject;
+
+		// iter trought the database
+		for (int i = 0; i < LevelLightsRows.Num(); i++)
+		{
+			// Key of the row id
+			FString RowKeyId = LevelLightsRows[i].ToString();
+
+			// We found our row
+			lightObject = LevelLightsDataTable->FindRow<FLevelLightStruct>(*RowKeyId, LevelLightsDataBasecontext, true);
+
+			LevelLightsObjectMap.Add(i, *lightObject);
+		}
+	}
+}
+
 //---------------------------------------------------------------------------
 // Load each stream level into out level graph
 //---------------------------------------------------------------------------
-void ALevelStreamerActor::LoadStreamLevel(FName levelToLoad, int count, int index_X, int index_Y, float rotation_X, float rotation_Y, float rotation_Z, int levelType)
+void ALevelStreamerActor::LoadStreamLevel(FGraphLevelObject* graphLevelRef, int count)
 {
+	FString levelToLoad = *graphLevelRef->LevelName;
+
+	int index_X = graphLevelRef->Index_X;
+	int index_Y = graphLevelRef->Index_Y;
+
+	float rotation_X = graphLevelRef->Rotation_X;
+	float rotation_Y = graphLevelRef->Rotation_Y;
+	float rotation_Z = graphLevelRef->Rotation_Z;
+
 	// The information of our level we want to load
-	ULevelStreaming* level = UGameplayStatics::GetStreamingLevel(OwningWorld, levelToLoad);
+	ULevelStreaming* level = UGameplayStatics::GetStreamingLevel(OwningWorld, *levelToLoad);
 
 	if (level)
 	{
 		// Create the name instance
-		FString nameInstance = FString::Printf(TEXT("%s_%d_x_%d_y"), *levelToLoad.ToString(), index_X, index_Y);
-
-		if (levelType == LevelTypeEnum::LEVEL_TYPE_STREET || levelType == LevelTypeEnum::LEVEL_TYPE_STREET_CORNER)
-		{
-			LightList.Add(*nameInstance);
-		}
+		FString nameInstance = FString::Printf(TEXT("%s_%d_x_%d_y"), *levelToLoad, index_X, index_Y);
 
 		ULevelStreaming* levelRef = level->CreateInstance(nameInstance);
 
-		UGameplayStatics::UnloadStreamLevel(OwningWorld, levelToLoad, FLatentActionInfo(), true);
+		UGameplayStatics::UnloadStreamLevel(OwningWorld, *levelToLoad, FLatentActionInfo(), true);
 
 		// Set the new position and rotation
 		int NewPosition_X = (GraphSize * index_X) * (TileSize / 2);
@@ -175,7 +239,7 @@ void ALevelStreamerActor::LoadStreamLevel(FName levelToLoad, int count, int inde
 
 		// Create the new rotation and get the direction
 		const FRotator YawRotation(rotation_X, rotation_Y, rotation_Z);
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
 		// Vector that stores the new position
 		FVector position;
@@ -195,15 +259,36 @@ void ALevelStreamerActor::LoadStreamLevel(FName levelToLoad, int count, int inde
 
 		UE_LOG(LogTemp, Warning, TEXT("New Location: %s"), *levelRef->LevelTransform.GetLocation().ToString());
 
+		int chunkLightTypeId = graphLevelRef->LightTypeId;
+
+		// check the level type to know if we need to add a light here
+		if (chunkLightTypeId != MainUtilities::LevelLightTypeEnum::LEVEL_LIGHT_TYPE_INVALID)
+		{
+			// TODO-SURETA: add the new light system here
+
+			//Asystem = NewObject<AIluminationSystem>(AIluminationSystem::StaticClass());
+
+			//// Fill the object values
+			//Asystem->SetLevelChunkType(chunkLightTypeId);
+			//Asystem->SetLevelChunkDirection(Direction);
+			//Asystem->SetLevelChunkPosition(position);
+
+			//Asystem->SetLevelLightsCount(2);
+
+			//// add to the list the number of lights we need to spawn on the game (this will be manage by the LevelIluminationSystem)
+			//LightObjectList.Add(Asystem);
+		}
+
 		// Load the stream level
 		FLatentActionInfo info;
 		info.UUID = count;
 
-		UGameplayStatics::LoadStreamLevel(OwningWorld, *nameInstance, true, false, info);
+		// Load the level with all the information that we have setted
+		UGameplayStatics::LoadStreamLevel(OwningWorld, *nameInstance, true, true, info);
 	}
 	else
 	{
 		// probably the name of the level we are currently loading is missing or isnt created
-		UE_LOG(LogTemp, Warning, TEXT("Failed to load the: %s level name or this is intentionally"), *levelToLoad.ToString());
+		UE_LOG(LogTemp, Warning, TEXT("Failed to load the: %s level name or this is intentionally"), *levelToLoad);
 	}
 }

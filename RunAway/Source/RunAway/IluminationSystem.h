@@ -6,21 +6,6 @@
 #include "GameFramework/Actor.h"
 #include "IluminationSystem.generated.h"
 
-USTRUCT(BlueprintType)
-struct FLightObject
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		int32 LightId;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float LightPosition;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool IsOn;
-};
-
 UCLASS()
 class RUNAWAY_API AIluminationSystem : public AActor
 {
@@ -28,19 +13,35 @@ class RUNAWAY_API AIluminationSystem : public AActor
 	
 public:	
 
-	// Sets default values for this actor's properties
+	//! Contructors
 	AIluminationSystem();
 
-	//! Called every frame
-	virtual void Tick(float DeltaTime) override;
+	//! Getter to retrieve the level chunk where the light need to be attached
+	int GetLevelChunkType() { return levelChunkType; };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIluminationSystem::meshComponent")
-		class UStaticMeshComponent* MeshComponent;
+	//! Setter that sets the level chunk name where the light need to be attached
+	void SetLevelChunkType(int value) { levelChunkType = value; };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIluminationSystem::LightComponent")
-		class USpotLightComponent* LightComponent;
+	//! Getter to retrieve the level chunk where the light need to be attached
+	FVector& GetLevelChunkDirection() { return Direction; };
 
-		class UStaticMesh* Mesh;
+	//! Setter that sets the level chunk name where the light need to be attached
+	void SetLevelChunkDirection(FVector& value) { Direction = value; };
+
+	//! Getter to retrieve the level chunk where the light need to be attached
+	FVector& GetLevelChunkPosition() { return levelChunkPosition; };
+
+	//! Setter that sets the level chunk name where the light need to be attached
+	void SetLevelChunkPosition(FVector& value) { levelChunkPosition = value; };
+
+	//! Getter that retrieves the number of lights per level chunk
+	int GetLevelLightsCount() { return lightsCountOnLevelChunk; };
+
+	//! Setter that sets the num of lights to load on the level chunk
+	void SetLevelLightsCount(int value) { lightsCountOnLevelChunk = value; };
+
+	//! Function that overrides the position for the current light object to display correctly on the world for each level chunk
+	void OverrideLightPosition(FVector lightPosition, FVector Direction);
 
 protected:
 
@@ -49,7 +50,13 @@ protected:
 
 private:
 
-	//! LightMap that has all the lights spawned on the map.
-	TMap<int, FLightObject> LightMap;
+	//! static mesh component ref
+	UStaticMeshComponent* StaticMeshComp;
+
+	//! object properties
+	int levelChunkType;
+	FVector levelChunkPosition;
+	FVector Direction;
+	int lightsCountOnLevelChunk;
 
 };

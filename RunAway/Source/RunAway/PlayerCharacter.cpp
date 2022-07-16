@@ -68,7 +68,6 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	// Player Actions
 	PlayerInputComponent->BindAction("Run", IE_Pressed, this, &APlayerCharacter::StartRunning);
 	PlayerInputComponent->BindAction("Run", IE_Released, this, &APlayerCharacter::StopRunning);
-
 }
 
 //---------------------------------------------------------------------------
