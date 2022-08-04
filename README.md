@@ -25,7 +25,7 @@
  My name is Santiago Ureta and I am a Game Developer <img src="https://media.giphy.com/media/WUlplcMpOCEmTGBtBW/giphy.gif" width="30"> from Argentina.
 - :telescope: I’m working as a game developer on the NHL franchise (since nhl 19) as a contractor but currently working with Globant.
 
-- :seedling: Keep improving on my tecnical and expertise with unreal engine
+- :seedling: Keep improving on my technical and expertise with unreal engine
 
 - :zap: In my free time, I work on my personal projects (I will add links to some of them in the future)
 
