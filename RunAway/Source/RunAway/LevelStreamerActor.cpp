@@ -9,7 +9,6 @@
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 
-
 //---------------------------------------------------------------------------
 // Constructor
 //---------------------------------------------------------------------------
@@ -27,13 +26,6 @@ ALevelStreamerActor::ALevelStreamerActor()
 	if (GraphLevelDataObject.Succeeded())
 	{
 		GraphLevelDataTable = GraphLevelDataObject.Object;
-	}
-
-	// Load the data base Level
-	static ConstructorHelpers::FObjectFinder<UDataTable> LevelLightsDataObject(TEXT("DataTable'/Game/BE/DataBases/LevelStremerData/LevelLights.LevelLights'"));
-	if (LevelLightsDataObject.Succeeded())
-	{
-		LevelLightsDataTable = LevelLightsDataObject.Object;
 	}
 }
 
@@ -118,9 +110,6 @@ void ALevelStreamerActor::MergeDataTables()
 			{
 				// Load the information needed for each level chunk to then be proccesed
 				LoadGraphLevelChunks();
-
-				//Load the lights information needed for the level
-				LoadLevelLightsInfo();
 			}
 		}
 	}
@@ -177,37 +166,6 @@ void ALevelStreamerActor::LoadGraphLevelChunks()
 }
 
 //---------------------------------------------------------------------------
-// Load the lights information needed for the level
-//---------------------------------------------------------------------------
-void ALevelStreamerActor::LoadLevelLightsInfo()
-{
-	// Load the lights data base values
-	if (LevelLightsDataTable)
-	{
-		// Create context for the Find row parameter
-		static const FString LevelLightsDataBasecontext(TEXT("LevelLightsDataTable Context"));
-
-		// Get the list of indexis
-		TArray<FName> LevelLightsRows = LevelLightsDataTable->GetRowNames();
-
-		// light object ref
-		FLevelLightStruct* lightObject;
-
-		// iter trought the database
-		for (int i = 0; i < LevelLightsRows.Num(); i++)
-		{
-			// Key of the row id
-			FString RowKeyId = LevelLightsRows[i].ToString();
-
-			// We found our row
-			lightObject = LevelLightsDataTable->FindRow<FLevelLightStruct>(*RowKeyId, LevelLightsDataBasecontext, true);
-
-			LevelLightsObjectMap.Add(i, *lightObject);
-		}
-	}
-}
-
-//---------------------------------------------------------------------------
 // Load each stream level into out level graph
 //---------------------------------------------------------------------------
 void ALevelStreamerActor::LoadStreamLevel(FGraphLevelObject* graphLevelRef, int count)
@@ -258,26 +216,6 @@ void ALevelStreamerActor::LoadStreamLevel(FGraphLevelObject* graphLevelRef, int 
 		levelRef->LevelTransform = newTransform;
 
 		UE_LOG(LogTemp, Warning, TEXT("New Location: %s"), *levelRef->LevelTransform.GetLocation().ToString());
-
-		int chunkLightTypeId = graphLevelRef->LightTypeId;
-
-		// check the level type to know if we need to add a light here
-		if (chunkLightTypeId != MainUtilities::LevelLightTypeEnum::LEVEL_LIGHT_TYPE_INVALID)
-		{
-			// TODO-SURETA: add the new light system here
-
-			//Asystem = NewObject<AIluminationSystem>(AIluminationSystem::StaticClass());
-
-			//// Fill the object values
-			//Asystem->SetLevelChunkType(chunkLightTypeId);
-			//Asystem->SetLevelChunkDirection(Direction);
-			//Asystem->SetLevelChunkPosition(position);
-
-			//Asystem->SetLevelLightsCount(2);
-
-			//// add to the list the number of lights we need to spawn on the game (this will be manage by the LevelIluminationSystem)
-			//LightObjectList.Add(Asystem);
-		}
 
 		// Load the stream level
 		FLatentActionInfo info;

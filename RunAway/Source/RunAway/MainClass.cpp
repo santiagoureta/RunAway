@@ -10,10 +10,8 @@
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
 
-// Sets default values
 AMainClass::AMainClass()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 }
 
@@ -89,36 +87,34 @@ void AMainClass::SetupDataBases()
 //---------------------------------------------------------------------------
 void AMainClass::GenerateWorld()
 {
+    // Log
+    AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_STARTING);
+    AMainClass::Log(MainUtilities::LogEnum::LOG_GENERATION_STATE, MainUtilities::GenerationTypeEnum::WORLD_TYPE);
+
     if (LevelStreamerClass->CreateStreamLevel())
     {
-        // Log
-        AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_STARTING);
+        AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_COMPLETED);
         AMainClass::Log(MainUtilities::LogEnum::LOG_GENERATION_STATE, MainUtilities::GenerationTypeEnum::WORLD_TYPE);
-
-        //TODO - SURETA: Continue working on the lights system, work with the levelStreamerActor
-        // Get the light object list to know where we need to spawn the lights with their information
-        auto LightObjectList = LevelStreamerClass->GetLightsListToAdd();
 
         // Spawn level ilumination system
         LevelSystemIlumination = OwningWorld->SpawnActor<ALevelSystemIlumination>();
+
+        AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_STARTING);
+        AMainClass::Log(MainUtilities::LogEnum::LOG_GENERATION_STATE, MainUtilities::GenerationTypeEnum::ILUMINATION_TYPE);
+
         if (LevelSystemIlumination != NULL)
         {
             AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_COMPLETED);
-            if (LevelSystemIlumination->CreateLightSystem(LightObjectList))
-            {
-                // Log
-                AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_STARTING);
-                AMainClass::Log(MainUtilities::LogEnum::LOG_GENERATION_STATE, MainUtilities::GenerationTypeEnum::ILUMINATION_TYPE);
-            }
-            else
-            {
-                // Set the mode to an invalid state
-                AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_FAILED);
-                AMainClass::SetGameState(MainUtilities::GameStateEnum::GAME_FAILED);
+            AMainClass::Log(MainUtilities::LogEnum::LOG_GENERATION_STATE, MainUtilities::GenerationTypeEnum::ILUMINATION_TYPE);            
+        }
+        else
+        {
+            // Set the mode to an invalid state
+            AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_FAILED);
+            AMainClass::SetGameState(MainUtilities::GameStateEnum::GAME_FAILED);
 
-                // Abort the game since we might have some errors
-                AMainClass::EndGame(false);
-            }
+            // Abort the game since we might have some errors
+            AMainClass::EndGame(false);
         }
     }
     else

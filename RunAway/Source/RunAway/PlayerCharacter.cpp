@@ -48,8 +48,9 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// Check if the player is running or not to change the speed and stamina for the player
 	IsPlayerRunning();
-	UE_LOG(LogTemp, Warning, TEXT("Current Player Stamina %d"), CurrentPlayerStamina);
 }
 
 //---------------------------------------------------------------------------
@@ -153,7 +154,6 @@ void APlayerCharacter::StartRunning()
 	{	
 		PlayerIsRunning = true;
 		GetCharacterMovement()->MaxWalkSpeed = PlayerMaxRunSpeed;
-		UE_LOG(LogTemp, Warning, TEXT("START RUNNING"));
 	}
 }
 
@@ -164,6 +164,5 @@ void APlayerCharacter::StopRunning()
 {
 	PlayerIsRunning = false;
 	GetCharacterMovement()->MaxWalkSpeed = PlayerMaxWalkSpeed;
-	UE_LOG(LogTemp, Warning, TEXT("STOP RUNNING"));
 }
 

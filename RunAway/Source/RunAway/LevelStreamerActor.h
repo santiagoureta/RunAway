@@ -7,7 +7,6 @@
 #include "Misc/EnumRange.h"
 #include "Engine/DataTable.h"
 #include "Main_Utilities.h"
-#include "IluminationSystem.h"
 #include "LevelStreamerActor.generated.h"
 
 USTRUCT(BlueprintType)
@@ -58,20 +57,6 @@ struct FGraphLevelObject : public FTableRowBase
 		int32 LightTypeId;
 };
 
-USTRUCT(BlueprintType)
-struct FLevelLightStruct : public FTableRowBase
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 LightTypeId;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 NumOfLights;
-};
-
-class AIluminationSystem;
-
 UCLASS()
 class RUNAWAY_API ALevelStreamerActor : public AActor
 {
@@ -88,8 +73,6 @@ public:
 	// Utility function to merge the data bases to create the map
 	virtual void MergeDataTables();
 
-	TArray<AIluminationSystem*> GetLightsListToAdd() { return LightObjectList; };
-	
 protected:
 
 	// Called when the game starts or when spawned
@@ -102,9 +85,6 @@ private:
 
 	// Utility function to merge the data bases to create the map
 	virtual void LoadGraphLevelChunks();
-
-	// Utility function to merge the data bases to create the map
-	virtual void LoadLevelLightsInfo();
 
 	// Utility function to Load each stream level to the graph
 	virtual void LoadStreamLevel(FGraphLevelObject* graphLevelRef, int count);
@@ -121,15 +101,6 @@ private:
 
 	// Map that has the chunk of levels to be loaded
 	TMap<int, FGraphLevelObject> GraphLevelObjectMap;
-
-	// Map that has the light information
-	TMap<int, FLevelLightStruct> LevelLightsObjectMap;
-
-	// Map with the level chunks were we need to load
-	TArray<AIluminationSystem*> LightObjectList;
-
-	// AIluminationSystem ref
-	AIluminationSystem* Asystem;
 
 	// WorldRef
 	UWorld* OwningWorld;

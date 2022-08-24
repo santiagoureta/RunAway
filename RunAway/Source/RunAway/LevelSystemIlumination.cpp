@@ -2,12 +2,13 @@
 
 
 #include "LevelSystemIlumination.h"
+#include "LightObject.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 
-// Sets default values
 ALevelSystemIlumination::ALevelSystemIlumination()
 {
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 // Called when the game starts or when spawned
@@ -15,6 +16,7 @@ void ALevelSystemIlumination::BeginPlay()
 {
 	Super::BeginPlay();
 }
+
 
 //---------------------------------------------------------------------------
 //	PUBLIC
@@ -24,8 +26,10 @@ void ALevelSystemIlumination::BeginPlay()
 //---------------------------------------------------------------------------
 void ALevelSystemIlumination::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+	// Retrieves the total of lights in the level
+	GetLightList();
 
+	Super::Tick(DeltaTime);
 }
 
 //---------------------------------------------------------------------------
@@ -39,68 +43,13 @@ bool ALevelSystemIlumination::IluminationSystemReady()
 }
 
 //---------------------------------------------------------------------------
-// Spawn the lights
-//---------------------------------------------------------------------------
-bool ALevelSystemIlumination::CreateLightSystem(TArray<AIluminationSystem*> &LightList)
-{
-	if (LightList.Num() > 0)
-	{
-		int changePositionVariable = 700;
-		for (auto lightElem : LightList)
-		{
-			int levelChunkType = lightElem->GetLevelChunkType();
-			int lightsPerChunk = lightElem->GetLevelLightsCount();
-			FVector levelChunkPosition = lightElem->GetLevelChunkPosition();
-			FVector levelChunkDirection = lightElem->GetLevelChunkDirection();
-			
-			if (levelChunkType == MainUtilities::LevelTypeEnum::LEVEL_TYPE_STREET)
-			{
-				for (size_t i = 0; i < lightsPerChunk; i++)
-				{
-					// Spawning the light
-					Asystem = GetWorld()->SpawnActor<AIluminationSystem>();
-					if (Asystem)
-					{
-						// create new position
-						FVector position;
-						int NewPosition_X;
-						int NewPosition_Y;
-
-						int currentPosition_X = levelChunkPosition.X;
-						int currentPosition_Y = levelChunkPosition.Y;
-
-						if (i == 0)
-						{
-							NewPosition_X = currentPosition_X + changePositionVariable;
-							NewPosition_Y = currentPosition_Y + changePositionVariable;
-						}
-						else
-						{
-							NewPosition_X = currentPosition_X - changePositionVariable;
-							NewPosition_Y = currentPosition_Y - changePositionVariable;
-						}
-
-						position.Set(NewPosition_X, NewPosition_Y, 0);
-
-						// override the light position
-						Asystem->OverrideLightPosition(position, levelChunkDirection);
-					}
-					else
-					{
-						// someting went wrong
-						return false;
-					}
-				}
-			}
-		}
-		return IluminationSystemReady();
-	}
-	else
-	{
-		return false;
-	}
-}
-
-//---------------------------------------------------------------------------
 //	PRIVATE
 //---------------------------------------------------------------------------
+void ALevelSystemIlumination::GetLightList()
+{
+	TArray<AActor*> ListOfLights;
+
+	UGameplayStatics::GetAllActorsOfClass(ALevelSystemIlumination::GetWorld(), ALightObject::StaticClass(), ListOfLights);
+
+	UE_LOG(LogTemp, Warning, TEXT("Number of lights in the level  %d"), ListOfLights.Num());
+}
