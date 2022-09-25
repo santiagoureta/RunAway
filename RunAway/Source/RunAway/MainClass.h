@@ -8,6 +8,8 @@
 #include "MainClass.generated.h"
 
 class ALevelStreamerActor;
+class ALevelSystemIlumination;
+class APlayerCharacter;
 
 UCLASS()
 class RUNAWAY_API AMainClass : public AActor
@@ -28,6 +30,18 @@ public:
 	//! Get the current generation state
 	virtual int GetGenrationState() const { return GenerationState; };
 
+	//
+	UPROPERTY(EditAnywhere)
+		TSubclassOf<AActor> LevelSystemIluminationActor;
+
+	//
+	UPROPERTY(EditAnywhere)
+		TSubclassOf<AActor> LevelStreamerActor;
+
+	//
+	UPROPERTY(EditAnywhere)
+		TSubclassOf<AActor> PlayerCharacterActor;
+
 protected:
 
 	// Called when the game starts or when spawned
@@ -47,6 +61,18 @@ private:
 	//! Function that send to stop the game at any time (Unexpected / intended)
 	virtual void EndGame(bool IsPLayerDead);
 
+	// Spawn the level streamer actor and store the ref
+	virtual void SpawnLevelStreamerActor();
+
+	// Spawn the level system ilumination actor and store the ref 
+	virtual void SpawnLevelSystemIluminationActor();
+
+	// Spawn the player character actor and store the ref 
+	virtual void SpawnPlayerCharacterActor();
+
+	// Spawn the enemy actor and store the ref 
+	virtual void SpawnEnemyActor();
+
 	// Creates the db interface and start merging it.
 	virtual void SetupDataBases();
 
@@ -63,9 +89,10 @@ private:
 	ALevelStreamerActor* LevelStreamerClass;
 
 	// Level Light System Ref
-	class ALevelSystemIlumination* LevelSystemIlumination;
+	ALevelSystemIlumination* LevelSystemIlumination;
 
-	TArray<AActor*> LightsToSpawn;
+	// Player Character Ref
+	APlayerCharacter* PlayerCharacter;
 
 	int GameState;
 

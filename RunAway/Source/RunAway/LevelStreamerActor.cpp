@@ -181,7 +181,7 @@ void ALevelStreamerActor::LoadStreamLevel(FGraphLevelObject* graphLevelRef, int 
 
 	// The information of our level we want to load
 	ULevelStreaming* level = UGameplayStatics::GetStreamingLevel(OwningWorld, *levelToLoad);
-
+	
 	if (level)
 	{
 		// Create the name instance

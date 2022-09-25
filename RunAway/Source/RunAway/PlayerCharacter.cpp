@@ -3,8 +3,10 @@
 #include "PlayerCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 #include "Components/InputComponent.h"
-#include "Animation/AnimInstance.h"
+#include "LevelSystemIlumination.h"
+#include "LightObject.h"
 #include "Engine/Engine.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
@@ -23,6 +25,11 @@ APlayerCharacter::APlayerCharacter()
 	FollowCamera->SetupAttachment(RootComponent);
 	FollowCamera->bUsePawnControlRotation = true;
 
+	// sphere collision that will retrieve the number of lights inside the radius we defined on the bp
+	NearbyLightsDetection = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionComponent"));
+	NearbyLightsDetection->SetGenerateOverlapEvents(true);
+	NearbyLightsDetection->SetupAttachment(RootComponent);
+
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.f, 0.0f);
@@ -39,6 +46,9 @@ APlayerCharacter::APlayerCharacter()
 //---------------------------------------------------------------------------
 void APlayerCharacter::BeginPlay()
 {
+	NearbyLightsDetection->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::OnCollision);
+	NearbyLightsDetection->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::OnOverlapEnd);
+
 	Super::BeginPlay();	
 }
 
@@ -52,6 +62,17 @@ void APlayerCharacter::Tick(float DeltaTime)
 	// Check if the player is running or not to change the speed and stamina for the player
 	IsPlayerRunning();
 }
+
+void APlayerCharacter::OnCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& Hit)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Encontramos a %s"), *OtherActor->GetName());
+}
+
+void APlayerCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Estamos lejos de %s"), *OtherActor->GetName());
+}
+
 
 //---------------------------------------------------------------------------
 // Called to bind functionality to input

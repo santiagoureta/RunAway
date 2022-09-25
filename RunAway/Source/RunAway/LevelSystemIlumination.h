@@ -21,6 +21,10 @@ public:
 
 	bool IluminationSystemReady();
 
+	//
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AActor> OverlapActor;
+
 protected:
 
 	// Called when the game starts or when spawned
@@ -28,8 +32,11 @@ protected:
 	
 private:
 
+	virtual void GetNearLights();
+
 	//! flag to return
 	bool isSystemReady;
 
-	virtual void GetLightList();
+	// Player Character Ref
+	class APlayerCharacter* PlayerCharacter;
 };

@@ -21,6 +21,14 @@ public:
 	//! Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	class USphereComponent* GetNearbyLightDetectionComponent() { return NearbyLightsDetection; };
+
+	UFUNCTION()
+		void OnCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& Hit);
+
+	UFUNCTION()
+		void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 protected:
 
 	//! Called when the game starts or when spawned
@@ -32,18 +40,24 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "APlayerCharacter::CameraComponent", meta = (AllowPrivateAccess = "true"))
 		class UCameraComponent* FollowCamera;
 
+	//! Sphere component
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "APlayerCharacter::CollisionComponent", meta = (AllowPrivateAccess = "true"))
+		class USphereComponent* NearbyLightsDetection;
+
 	//! Flag to know if the player is running
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "APlayerCharacter::PlayerState", meta = (AllowPrivateAccess = "true"))	
 		bool PlayerIsRunning;
 
 	//! Player Max walk speed
-	const float PlayerMaxWalkSpeed = 250.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "APlayerCharacter::DebugPlayerProperties", meta = (AllowPrivateAccess = "true"))
+		float PlayerMaxWalkSpeed = 250.f;
 
 	//! Player Max run speed
-	const float PlayerMaxRunSpeed = 850.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "APlayerCharacter::DebugPlayerProperties", meta = (AllowPrivateAccess = "true"))
+		float PlayerMaxRunSpeed = 850.f;
 
 	//! Player Max Stamina
-	const int PlayerMaxStamina = 800;
+	int PlayerMaxStamina = 800;
 
 	//! Player Min Stamina
 	const int PlayerMinStamina = -150;

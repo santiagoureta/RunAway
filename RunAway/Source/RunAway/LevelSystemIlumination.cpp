@@ -3,31 +3,38 @@
 
 #include "LevelSystemIlumination.h"
 #include "LightObject.h"
+#include "PlayerCharacter.h"
+#include "Components/SphereComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 
 ALevelSystemIlumination::ALevelSystemIlumination()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	if (!OverlapActor)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Something went wrong the player character actor was not found"));
+	}
 }
 
 // Called when the game starts or when spawned
 void ALevelSystemIlumination::BeginPlay()
 {
+	PlayerCharacter = static_cast<APlayerCharacter*>(OverlapActor->GetDefaultObject());
+
 	Super::BeginPlay();
 }
 
-
-//---------------------------------------------------------------------------
-//	PUBLIC
-//---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 // Called every frame
 //---------------------------------------------------------------------------
 void ALevelSystemIlumination::Tick(float DeltaTime)
-{
-	// Retrieves the total of lights in the level
-	GetLightList();
+{	
+	if (PlayerCharacter)
+	{
+		GetNearLights();
+	}
 
 	Super::Tick(DeltaTime);
 }
@@ -45,11 +52,15 @@ bool ALevelSystemIlumination::IluminationSystemReady()
 //---------------------------------------------------------------------------
 //	PRIVATE
 //---------------------------------------------------------------------------
-void ALevelSystemIlumination::GetLightList()
+void ALevelSystemIlumination::GetNearLights()
 {
-	TArray<AActor*> ListOfLights;
+	// TODO CONTINUE WITH THE LIGHT SYSTEM, we are close
 
-	UGameplayStatics::GetAllActorsOfClass(ALevelSystemIlumination::GetWorld(), ALightObject::StaticClass(), ListOfLights);
+	auto lightsInRange =  PlayerCharacter->GetNearbyLightDetectionComponent();
 
-	UE_LOG(LogTemp, Warning, TEXT("Number of lights in the level  %d"), ListOfLights.Num());
+	for (auto& actorElem : lightsInRange->GetOverlapInfos())
+	{
+		UE_LOG(LogTemp, Warning, TEXT(" name %s"), *actorElem.OverlapInfo.Actor.Get()->GetFullName());
+	}
+
 }

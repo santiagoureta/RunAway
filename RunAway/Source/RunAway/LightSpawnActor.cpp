@@ -17,14 +17,14 @@ ALightSpawnActor::ALightSpawnActor()
 
 	Arrow = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow Component"));
 	Arrow->AttachToComponent(CollisionMesh, FAttachmentTransformRules::KeepRelativeTransform);
+
+	//Load the lights information needed for the level
+	LoadLevelLightsInfo();
 }
 
 // Called when the game starts or when spawned
 void ALightSpawnActor::BeginPlay()
 {
-	//Load the lights information needed for the level
-	LoadLevelLightsInfo();
-
 	if (SpawnLightMesh)
 	{
 		// Set the new rotation and location for the light
@@ -32,7 +32,7 @@ void ALightSpawnActor::BeginPlay()
 		FRotator rotation = CollisionMesh->GetComponentRotation();
 
 		// Spawn the actor with the correct location
-		LightObjectRef = ALightSpawnActor::GetWorld()->SpawnActor<ALightObject>(ALightObject::StaticClass(), location , rotation, FActorSpawnParameters());
+		LightObjectRef = ALightSpawnActor::GetWorld()->SpawnActor<ALightObject>(ALightObject::StaticClass(), location, rotation, FActorSpawnParameters());
 
 		if (LightObjectRef)
 		{
@@ -67,6 +67,7 @@ void ALightSpawnActor::BeginPlay()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Missing Light mesh on %s "), *ALightSpawnActor::AActor::GetName());
 	}
+	
 
 	Super::BeginPlay();
 }

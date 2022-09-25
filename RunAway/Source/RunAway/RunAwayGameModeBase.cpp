@@ -13,6 +13,6 @@ ARunAwayGameModeBase::ARunAwayGameModeBase()
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("'/Game/BE/Blueprints/Character/PlayerCharacter_BP'"));
 	if (PlayerPawnBPClass.Class != NULL)
 	{
-		DefaultPawnClass = PlayerPawnBPClass.Class;
+		DefaultPawnClass = NULL;
 	}	
 }
