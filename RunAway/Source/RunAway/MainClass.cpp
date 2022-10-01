@@ -192,6 +192,7 @@ void AMainClass::SpawnPlayerCharacterActor()
     }
 }
 
+//---------------------------------------------------------------------------
 void AMainClass::SpawnEnemyActor()
 {
     AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_STARTING);

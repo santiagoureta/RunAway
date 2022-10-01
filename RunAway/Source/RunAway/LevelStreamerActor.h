@@ -96,9 +96,6 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = DataBase, meta = (AllowPrivateAccess = "true"))
 		class UDataTable* GraphLevelDataTable;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = DataBase, meta = (AllowPrivateAccess = "true"))
-		class UDataTable* LevelLightsDataTable;
-
 	// Map that has the chunk of levels to be loaded
 	TMap<int, FGraphLevelObject> GraphLevelObjectMap;
 

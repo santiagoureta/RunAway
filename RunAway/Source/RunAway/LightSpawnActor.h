@@ -63,7 +63,7 @@ protected:
 
 private:
 
-	// Utility function to merge the data bases to create the map
+	// Utility function to merge the lights information needed for the level
 	virtual void LoadLevelLightsInfo();
 
 	// Box component Ref
@@ -82,10 +82,6 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = LightInfo, meta = (AllowPrivateAccess = "true"))
 		float LightWorldScale = 1.25f;
 
-	//! world scale value for each light
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = LightInfo, meta = (AllowPrivateAccess = "true"))
-		USpotLightComponent* SpawnSpotLightComp;
-
 	// Property to read values from the level streamer data base
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = LightInfo, meta = (AllowPrivateAccess = "true"))
 		LevelLightType LightTypeEnum;
@@ -95,9 +91,7 @@ private:
 		class UDataTable* LevelLightsDataTable;
 
 	// Map that has the light information
-	TMap<LevelLightType, FLevelLightStruct> LevelLightsObjectMap;
-
-	// Light Object class Ref
-	ALightObject* LightObjectRef = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = LevelLightMap, meta = (AllowPrivateAccess = "true"))
+		TMap<LevelLightType, FLevelLightStruct> LevelLightsObjectMap;
 	
 };

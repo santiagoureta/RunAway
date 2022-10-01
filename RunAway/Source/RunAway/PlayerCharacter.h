@@ -21,14 +21,6 @@ public:
 	//! Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	class USphereComponent* GetNearbyLightDetectionComponent() { return NearbyLightsDetection; };
-
-	UFUNCTION()
-		void OnCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& Hit);
-
-	UFUNCTION()
-		void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
 protected:
 
 	//! Called when the game starts or when spawned
@@ -39,10 +31,6 @@ private:
 	//! Camera component
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "APlayerCharacter::CameraComponent", meta = (AllowPrivateAccess = "true"))
 		class UCameraComponent* FollowCamera;
-
-	//! Sphere component
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "APlayerCharacter::CollisionComponent", meta = (AllowPrivateAccess = "true"))
-		class USphereComponent* NearbyLightsDetection;
 
 	//! Flag to know if the player is running
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "APlayerCharacter::PlayerState", meta = (AllowPrivateAccess = "true"))	
@@ -57,7 +45,7 @@ private:
 		float PlayerMaxRunSpeed = 850.f;
 
 	//! Player Max Stamina
-	int PlayerMaxStamina = 800;
+	int PlayerMaxStamina = 1000;
 
 	//! Player Min Stamina
 	const int PlayerMinStamina = -150;

@@ -4,6 +4,7 @@
 #include "LightObject.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SpotLightComponent.h"
+#include "Components/SphereComponent.h"
 #include "Engine/World.h"
 #include "Engine/StaticMesh.h"
 #include "UObject/ConstructorHelpers.h"
@@ -17,6 +18,12 @@ ALightObject::ALightObject()
 	StaticLightMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualRepresentation"));
 	StaticLightMeshComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	SetRootComponent(StaticLightMeshComp);
+
+	// sphere collision that will retrieve the number of lights inside the radius we defined on the bp
+	NearbyDetection = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionComponent"));
+	NearbyDetection->SetGenerateOverlapEvents(true);
+	NearbyDetection->SetSphereRadius(310);
+	NearbyDetection->SetupAttachment(RootComponent);
 
 	// Pre setup general information for the spot light
 	LightComponent = CreateDefaultSubobject<USpotLightComponent>(TEXT("LightRepresentation"));

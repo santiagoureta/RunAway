@@ -25,50 +25,6 @@ ALightSpawnActor::ALightSpawnActor()
 // Called when the game starts or when spawned
 void ALightSpawnActor::BeginPlay()
 {
-	if (SpawnLightMesh)
-	{
-		// Set the new rotation and location for the light
-		FVector location = ALightSpawnActor::AActor::GetActorLocation();
-		FRotator rotation = CollisionMesh->GetComponentRotation();
-
-		// Spawn the actor with the correct location
-		LightObjectRef = ALightSpawnActor::GetWorld()->SpawnActor<ALightObject>(ALightObject::StaticClass(), location, rotation, FActorSpawnParameters());
-
-		if (LightObjectRef)
-		{
-			// Light Mesh Info
-			auto staticLightMeshComponent = LightObjectRef->StaticLightMeshComp;
-			staticLightMeshComponent->SetStaticMesh(SpawnLightMesh);
-			staticLightMeshComponent->SetWorldScale3D(FVector(LightWorldScale));
-
-			FLevelLightStruct* LevelLightObject = LevelLightsObjectMap.Find(LightTypeEnum);
-			if (LevelLightObject)
-			{
-				// TODO: maybe we could add some properties into the csv, more work for later or find another way
-				// Light properties Info (Rotation and location)
-				auto LightProperties = LightObjectRef->LightComponent;
-				LightProperties->SetRelativeLocation(FVector(LevelLightObject->LightPosition_X, LevelLightObject->LightPosition_Y, LevelLightObject->LightPosition_Z));
-				LightProperties->SetRelativeRotation(FRotator(LevelLightObject->LightRotation_X, LevelLightObject->LightRotation_Y, LevelLightObject->LightRotation_Z));
-
-				// Destroy the actor after the light has been spawned
-				ALightSpawnActor::AActor::Destroy();
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Could not initialize the light object actor on %s"), *ALightSpawnActor::AActor::GetName());
-			}
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Could not initialize the light object actor on %s"), *ALightSpawnActor::AActor::GetName());
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Missing Light mesh on %s "), *ALightSpawnActor::AActor::GetName());
-	}
-	
-
 	Super::BeginPlay();
 }
 

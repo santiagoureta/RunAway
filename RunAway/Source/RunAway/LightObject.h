@@ -16,35 +16,33 @@ public:
 	//! Contructors
 	ALightObject();
 
-	//! Getter to retrieve the level chunk where the light need to be attached
-	int GetLevelChunkType() { return levelChunkType; };
-
-	//! Setter that sets the level chunk name where the light need to be attached
-	void SetLevelChunkType(int value) { levelChunkType = value; };
-
-	//! Getter that retrieves the number of lights per level chunk
-	int GetLevelLightsCount() { return lightsCountOnLevelChunk; };
-
-	//! Setter that sets the num of lights to load on the level chunk
-	void SetLevelLightsCount(int value) { lightsCountOnLevelChunk = value; };
-
 	//! static mesh component ref
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = LightInfo, meta = (AllowPrivateAccess = "true"))
 	class UStaticMeshComponent* StaticLightMeshComp;
 
-	//!///
+	//! spotlight component ref
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = LightInfo, meta = (AllowPrivateAccess = "true"))
 	class USpotLightComponent* LightComponent;
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "LightAction")
+		void FlickeringLight();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "LightAction")
+		void LightToExplote();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "LightAction")
+		void LightToExploteWithDelay();
+
 protected:
 
-	//! Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 private:
 
-	//! object properties
-	int levelChunkType;
-	int lightsCountOnLevelChunk;
+	//! Sphere component ref
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ALightObject::CollisionComponent", meta = (AllowPrivateAccess = "true"))
+		class USphereComponent* NearbyDetection;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = LightInfo, meta = (AllowPrivateAccess = "true"))
+		bool IsLightAvailable = true;
 };
