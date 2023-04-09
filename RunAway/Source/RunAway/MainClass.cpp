@@ -7,32 +7,35 @@
 #include "NavMesh/NavMeshBoundsVolume.h"
 #include "LevelSystemIlumination.h"
 #include "PlayerCharacter.h"
+#include "EnemyCharacter.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
 
+//---------------------------------------------------------------------------
+//	CONSTRUCTOR
+//---------------------------------------------------------------------------
 AMainClass::AMainClass()
 {
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-// Called when the game starts or when spawned
+//---------------------------------------------------------------------------
+//	BEGIN PLAY
+//---------------------------------------------------------------------------
 void AMainClass::BeginPlay()
 {
-    // Get the Ref of the world
     OwningWorld = GetWorld();
-
-    // Start the game
-    AMainClass::StartGame();
 
     Super::BeginPlay();
 }
 
-// Called every frame
+//---------------------------------------------------------------------------
+//	TICK
+//---------------------------------------------------------------------------
 void AMainClass::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 //---------------------------------------------------------------------------
@@ -49,54 +52,6 @@ void AMainClass::StartGame()
 
     // Start Setting up the data bases for the world
     AMainClass::SetupDataBases();
-
-    // Generating world
-    AMainClass::GenerateWorld();
-}
-
-//---------------------------------------------------------------------------
-void AMainClass::SetupDataBases()
-{
-    // Set the Genration Step for the db merges
-    AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_STARTING);
-
-    // Log
-    AMainClass::Log(MainUtilities::LogEnum::LOG_GENERATION_STATE, MainUtilities::GenerationTypeEnum::DATABASE_TYPE);
-
-    // Merge the data bases to know which map we need to load
-    LevelStreamerClass->MergeDataTables();
-
-    AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_COMPLETED);
-}
-
-//---------------------------------------------------------------------------
-void AMainClass::GenerateWorld()
-{
-    // Log
-    AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_STARTING);
-    AMainClass::Log(MainUtilities::LogEnum::LOG_GENERATION_STATE, MainUtilities::GenerationTypeEnum::WORLD_TYPE);
-
-    if (LevelStreamerClass->CreateStreamLevel())
-    {
-        AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_COMPLETED);
-        AMainClass::Log(MainUtilities::LogEnum::LOG_GENERATION_STATE, MainUtilities::GenerationTypeEnum::WORLD_TYPE);
-
-        // TODO: for the enemy and the player we need to get the values from the map inside the levelstreamer
-
-        //Spawn the bp for the player character
-        AMainClass::SpawnPlayerCharacterActor();
-
-        //Spawn the bp for the enemy
-        AMainClass::SpawnEnemyActor();
-
-        // Spawn the bp level system ilumination actor
-        AMainClass::SpawnLevelSystemIluminationActor();
-    }
-    else
-    {
-        // Abort the game since we might have some errors
-        AMainClass::EndGame(false);
-    }
 }
 
 //---------------------------------------------------------------------------
@@ -124,14 +79,16 @@ void AMainClass::EndGame(bool IsPlayerDead)
 }
 
 //---------------------------------------------------------------------------
-void AMainClass::SpawnLevelStreamerActor()
+void AMainClass::GenerateWorld()
 {
-    auto* levelStreamerRef = OwningWorld->SpawnActor<AActor>(LevelStreamerActor);
+    // Log
+    AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_STARTING);
+    AMainClass::Log(MainUtilities::LogEnum::LOG_GENERATION_STATE, MainUtilities::GenerationTypeEnum::WORLD_TYPE);
 
-    if (levelStreamerRef != NULL)
+    if (LevelStreamerClass->CreateStreamLevel())
     {
-        // cast the actor spawned to the correct class
-        LevelStreamerClass = static_cast<ALevelStreamerActor*>(levelStreamerRef);
+        AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_COMPLETED);
+        AMainClass::Log(MainUtilities::LogEnum::LOG_GENERATION_STATE, MainUtilities::GenerationTypeEnum::WORLD_TYPE);
     }
     else
     {
@@ -169,18 +126,20 @@ void AMainClass::SpawnPlayerCharacterActor()
     AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_STARTING);
     AMainClass::Log(MainUtilities::LogEnum::LOG_GENERATION_STATE, MainUtilities::GenerationTypeEnum::PLAYER_TYPE);
 
-    FActorSpawnParameters s;
+    // Get the location to spawn the player from the level streamer class
+    FVector playerSpawnlocation = LevelStreamerClass->PlayerLocationToSpawn;
 
-    // TODO: Retrieve the const from the level streamer to spawn the player on the correct position
-    FVector v(0, 800, 22);
+    // Spawn parameters
+    FActorSpawnParameters s;
     FRotator r = FRotator::ZeroRotator;
 
-    auto* playerCharacterRef = OwningWorld->SpawnActor<AActor>(PlayerCharacterActor, v, r, s);
-
+    // Spawn Player
+    auto playerCharacterRef = OwningWorld->SpawnActor<AActor>(PlayerCharacterActor, playerSpawnlocation, r, s);
+ 
     if (playerCharacterRef != NULL)
     {
         // cast the actor spawned to the correct class
-        PlayerCharacter = static_cast<APlayerCharacter*>(playerCharacterRef);
+        PlayerCharacter = Cast<APlayerCharacter>(playerCharacterRef);
 
         AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_COMPLETED);
         AMainClass::Log(MainUtilities::LogEnum::LOG_GENERATION_STATE, MainUtilities::GenerationTypeEnum::PLAYER_TYPE);
@@ -197,8 +156,63 @@ void AMainClass::SpawnEnemyActor()
 {
     AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_STARTING);
     AMainClass::Log(MainUtilities::LogEnum::LOG_GENERATION_STATE, MainUtilities::GenerationTypeEnum::ENEMY_TYPE);
+    
+    // Get the location to spawn the enemy from the level streamer class
+    FVector enemySpawnLocation = LevelStreamerClass->EnemyLocationToSpawn;
 
-    // TODO Spawn the enemy
+    // Spawn parameters
+    FActorSpawnParameters s;
+    FRotator r = FRotator::ZeroRotator;
+
+    // Spawn Enemy
+    auto EnemyCharacterRef = OwningWorld->SpawnActor<AActor>(EnemyCharacterActor, enemySpawnLocation, r, s);
+
+    if (EnemyCharacterRef != NULL)
+    {
+        // cast the actor spawned to the correct class
+        EnemyCharacter = Cast<AEnemyCharacter>(EnemyCharacterRef);
+
+        AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_COMPLETED);
+        AMainClass::Log(MainUtilities::LogEnum::LOG_GENERATION_STATE, MainUtilities::GenerationTypeEnum::PLAYER_TYPE);
+    }
+    else
+    {
+        // Abort the game since we might have some errors
+        AMainClass::EndGame(false);
+    }
+
+}
+
+//---------------------------------------------------------------------------
+void AMainClass::SpawnLevelStreamerActor()
+{
+    auto* levelStreamerRef = OwningWorld->SpawnActor<AActor>(LevelStreamerActor);
+
+    if (levelStreamerRef != NULL)
+    {
+        // cast the actor spawned to the correct class
+        LevelStreamerClass = static_cast<ALevelStreamerActor*>(levelStreamerRef);
+    }
+    else
+    {
+        // Abort the game since we might have some errors
+        AMainClass::EndGame(false);
+    }
+}
+
+//---------------------------------------------------------------------------
+void AMainClass::SetupDataBases()
+{
+    // Set the Genration Step for the db merges
+    AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_STARTING);
+
+    // Log
+    AMainClass::Log(MainUtilities::LogEnum::LOG_GENERATION_STATE, MainUtilities::GenerationTypeEnum::DATABASE_TYPE);
+
+    // Merge the data bases to know which map we need to load
+    LevelStreamerClass->MergeDataTables();
+
+    AMainClass::SetGenerationState(MainUtilities::GenerationStepsEnum::GENERATING_COMPLETED);
 }
 
 //---------------------------------------------------------------------------

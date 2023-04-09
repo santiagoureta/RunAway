@@ -3,6 +3,9 @@
 #include "LightSpawnActor.h"
 #include "UObject/ConstructorHelpers.h"
 
+//---------------------------------------------------------------------------
+// CONSTRUCTOR
+//---------------------------------------------------------------------------
 ALightSpawnActor::ALightSpawnActor()
 {
 	// Load the data base Level
@@ -22,11 +25,14 @@ ALightSpawnActor::ALightSpawnActor()
 	LoadLevelLightsInfo();
 }
 
-// Called when the game starts or when spawned
 void ALightSpawnActor::BeginPlay()
 {
 	Super::BeginPlay();
 }
+
+//---------------------------------------------------------------------------
+// PRIVATE
+//---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
 // Load the lights information needed for the level

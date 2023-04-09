@@ -56,6 +56,10 @@ public:
 	// Sets default values for this actor's properties
 	ALightSpawnActor();
 
+	//! Function that starts spawning the lights
+	UFUNCTION(BlueprintImplementableEvent, Category = "LightSpawnActor")
+		void StartSpawningLights(ALevelSystemIlumination* levelSystemRef);
+
 protected:
 
 	// Called when the game starts or when spawned

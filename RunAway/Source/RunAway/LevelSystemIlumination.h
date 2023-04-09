@@ -67,15 +67,45 @@ protected:
 	
 private:
 
-	//!
-	virtual void LightActionImpl(LightAction LightActionId);
+	//! Function that Retrieves the list of lights on the level
+	UFUNCTION(BlueprintCallable, Category = "LightSystem")
+		virtual void StartShutDown();
+
+	//! Function that Renders the lights on the level
+	UFUNCTION(BlueprintCallable, Category = "LightSystem")
+		virtual void RenderLights();
+
+	//! Function that Retrieves the list of lights on the level
+	UFUNCTION(BlueprintCallable, Category = "LightSystem")
+		virtual void SetLightList();
+
+	//! Function that set the action each light will do
+	virtual void SetLightAction(LightAction LightActionId);
 	
-	//!
-	virtual void EnemyDebuffImpl(EnemyDebuff DebuffId);
-	
-	//!
+	//! Function that sets the debuff for the enemy each time
+	virtual void SetEnemyDebuff(EnemyDebuff DebuffId);
+
+	//! WorldRef
+	UWorld* OwningWorld;
+
+	//! Light object Ref
 	ALightObject* LightObject;
-	
-	//!
+
+	//! Enemy object Ref
 	AEnemyCharacter* EnemyObject;
+
+	//! Map of lights that had seen the actor
+	TMap<FString, ALightObject*> mLightWatched;
+
+	//! LightList on the world
+	TArray<ALightObject*> lightList;
+
+	//! counter for the logic to determinated the end of the shutdown
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = LightInfo, meta = (AllowPrivateAccess = "true"))
+		int lightsOffCount = 0;
+
+	//! Delay for the system to let the light flicker
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = LightInfo, meta = (AllowPrivateAccess = "true"))
+		float delayValue = 10.0f;
+	
 };

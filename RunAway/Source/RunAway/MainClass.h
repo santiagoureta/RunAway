@@ -10,6 +10,9 @@
 class ALevelStreamerActor;
 class ALevelSystemIlumination;
 class APlayerCharacter;
+class AEnemyCharacter;
+class Main_Utilites;
+
 
 UCLASS()
 class RUNAWAY_API AMainClass : public AActor
@@ -42,6 +45,10 @@ public:
 	UPROPERTY(EditAnywhere)
 		TSubclassOf<AActor> PlayerCharacterActor;
 
+	//
+	UPROPERTY(EditAnywhere)
+		TSubclassOf<AActor> EnemyCharacterActor;
+
 protected:
 
 	// Called when the game starts or when spawned
@@ -49,50 +56,59 @@ protected:
 
 private:
 	
+	//! Function that start the game
+	UFUNCTION(BlueprintCallable, Category = "MainClass")
+		virtual void StartGame();
+
+	//! Function that send to stop the game at any time (Unexpected / intended)
+	UFUNCTION(BlueprintCallable, Category = "MainClass")
+		virtual void EndGame(bool IsPLayerDead);
+
+	//! Calls to render the map and objects inside it.
+	UFUNCTION(BlueprintCallable, Category = "MainClass")
+		virtual void GenerateWorld();
+
+	//! Spawn the level system ilumination actor and store the ref
+	UFUNCTION(BlueprintCallable, Category = "MainClass")
+		virtual void SpawnLevelSystemIluminationActor();
+
+	//! Spawn the player character actor and store the ref
+	UFUNCTION(BlueprintCallable, Category = "MainClass")
+		virtual void SpawnPlayerCharacterActor();
+
+	//! Spawn the enemy actor and store the ref
+	UFUNCTION(BlueprintCallable, Category = "MainClass")
+		virtual void SpawnEnemyActor();
+
+	//! Spawn the level streamer actor and store the ref
+	virtual void SpawnLevelStreamerActor();
+
+	//! Creates the db interface and start merging it.
+	virtual void SetupDataBases();
+
+	//! Helper function 
+	virtual void Log(MainUtilities::LogEnum logId, MainUtilities::GenerationTypeEnum type);
+
 	//! Set the new game state
 	virtual void SetGameState(MainUtilities::GameStateEnum gameState) { GameState = static_cast<int>(gameState); };
 
 	//! Set the new generation state
 	virtual void SetGenerationState(MainUtilities::GenerationStepsEnum generationState) { GenerationState = static_cast<int>(generationState); };
 
-	//! Function that start the game
-	virtual void StartGame();
-
-	//! Function that send to stop the game at any time (Unexpected / intended)
-	virtual void EndGame(bool IsPLayerDead);
-
-	// Spawn the level streamer actor and store the ref
-	virtual void SpawnLevelStreamerActor();
-
-	// Spawn the level system ilumination actor and store the ref 
-	virtual void SpawnLevelSystemIluminationActor();
-
-	// Spawn the player character actor and store the ref 
-	virtual void SpawnPlayerCharacterActor();
-
-	// Spawn the enemy actor and store the ref 
-	virtual void SpawnEnemyActor();
-
-	// Creates the db interface and start merging it.
-	virtual void SetupDataBases();
-
-	// Calls to render the map and objects inside it.
-	virtual void GenerateWorld();
-
-	// Helper function 
-	virtual void Log(MainUtilities::LogEnum logId, MainUtilities::GenerationTypeEnum type);
-
-	// WorldRef
+	//! WorldRef
 	UWorld* OwningWorld;
 
-	// Level Streamer Ref
+	//! Level Streamer Ref
 	ALevelStreamerActor* LevelStreamerClass;
 
-	// Level Light System Ref
+	//! Level Light System Ref
 	ALevelSystemIlumination* LevelSystemIlumination;
 
-	// Player Character Ref
+	//! Player Character Ref
 	APlayerCharacter* PlayerCharacter;
+
+	//! Enemy Character Ref
+	AEnemyCharacter* EnemyCharacter;
 
 	int GameState;
 

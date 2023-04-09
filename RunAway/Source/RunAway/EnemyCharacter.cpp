@@ -2,28 +2,49 @@
 
 
 #include "EnemyCharacter.h"
+#include "Particles/ParticleSystemComponent.h"
+#include "Perception/PawnSensingComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-// Sets default values
+//---------------------------------------------------------------------------
+// CONSTRUCTOR
+//---------------------------------------------------------------------------
 AEnemyCharacter::AEnemyCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	smoke_1 = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("Smoke_1"));
+	smoke_1->SetRelativeLocation(FVector(0,0,-60));
+	smoke_1->AttachTo(RootComponent);
+	
+	pawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("pawnSensing"));
+	pawnSensing->bHearNoises = false;
+	pawnSensing->SetPeripheralVisionAngle(55.0);
+	pawnSensing->LOSHearingThreshold = 0.0;
+	pawnSensing->HearingThreshold = 0.0;
 
 	// Configure character movement
 	GetCharacterMovement()->MaxWalkSpeed = EnemyNormalSpeed;
 }
 
-// Called when the game starts or when spawned
+//---------------------------------------------------------------------------
+// BEGIN PLAY
+//---------------------------------------------------------------------------
 void AEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
-// Called every frame
+//---------------------------------------------------------------------------
+// TICK
+//---------------------------------------------------------------------------
 void AEnemyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
+
+//---------------------------------------------------------------------------
+//	PUBLIC
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 

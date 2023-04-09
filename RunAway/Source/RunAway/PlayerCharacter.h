@@ -21,40 +21,16 @@ public:
 	//! Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	//! Function that allows the user to open the minimap
+	UFUNCTION(BlueprintImplementableEvent, Category = "PlayerAction")
+		void MobileGpsOpen();
+
 protected:
 
 	//! Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 private:
-
-	//! Camera component
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "APlayerCharacter::CameraComponent", meta = (AllowPrivateAccess = "true"))
-		class UCameraComponent* FollowCamera;
-
-	//! Flag to know if the player is running
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "APlayerCharacter::PlayerState", meta = (AllowPrivateAccess = "true"))	
-		bool PlayerIsRunning;
-
-	//! Player Max walk speed
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "APlayerCharacter::DebugPlayerProperties", meta = (AllowPrivateAccess = "true"))
-		float PlayerMaxWalkSpeed = 250.f;
-
-	//! Player Max run speed
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "APlayerCharacter::DebugPlayerProperties", meta = (AllowPrivateAccess = "true"))
-		float PlayerMaxRunSpeed = 850.f;
-
-	//! Player Max Stamina
-	int PlayerMaxStamina = 1000;
-
-	//! Player Min Stamina
-	const int PlayerMinStamina = -150;
-
-	//! Player Min Stamina
-	int PlayerDelayStamina = 0;
-
-	//! Player Current Stamina
-	int CurrentPlayerStamina = 0;
 
 	//! Function to modify the player stamina
 	virtual void IsPlayerRunning();
@@ -70,5 +46,51 @@ private:
 
 	//! Function that Stop the running action
 	virtual void StopRunning();
+
+	//! Camera component
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "APlayerCharacter::CameraComponent", meta = (AllowPrivateAccess = "true"))
+		class UCameraComponent* FollowCamera;
+
+	//! SpringArm that controls the Scene Capture
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "APlayerCharacter::SceneCapture", meta = (AllowPrivateAccess = "true"))
+		class USpringArmComponent* SpringArmRenderMap;
+
+	//! Scene Capture Comp
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "APlayerCharacter::SceneCapture", meta = (AllowPrivateAccess = "true"))
+		class USceneCaptureComponent2D* SceneCapture;
+
+	//! Sprite component
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "APlayerCharacter::SceneCapture", meta = (AllowPrivateAccess = "true"))
+		class UPaperSpriteComponent* SpriteComponent;
+
+	//! SplineComponent
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "APlayerCharacter::SplineComponent", meta = (AllowPrivateAccess = "true"))
+		class USplineComponent* SplineComponent;
+
+	//! Flag to know if the player is running
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "APlayerCharacter::PlayerState", meta = (AllowPrivateAccess = "true"))
+		bool PlayerIsRunning;
+
+	//! Player Max walk speed
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "APlayerCharacter::DebugPlayerProperties", meta = (AllowPrivateAccess = "true"))
+		float PlayerMaxWalkSpeed = 250.f;
+
+	//! Player Max run speed
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "APlayerCharacter::DebugPlayerProperties", meta = (AllowPrivateAccess = "true"))
+		float PlayerMaxRunSpeed = 850.f;
+
+	//! Player Current Stamina
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "APlayerCharacter::DebugPlayerProperties", meta = (AllowPrivateAccess = "true"))
+		float CurrentPlayerStamina = 0.0f;
+
+	//! Player Max Stamina
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "APlayerCharacter::DebugPlayerProperties", meta = (AllowPrivateAccess = "true"))
+		float PlayerMaxStamina = 1000.0f;
+
+	//! Player Min Stamina
+	const float PlayerMinStamina = -150.0f;
+
+	//! Player Min Stamina
+	float PlayerDelayStamina = 0.0f;
 
 };

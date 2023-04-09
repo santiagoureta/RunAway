@@ -4,15 +4,16 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
-#include "LevelSystemIlumination.h"
-#include "LightObject.h"
+#include "Components/SceneCaptureComponent2D.h"
+#include "Components/SplineComponent.h"
+#include "PaperSpriteComponent.h"
 #include "Engine/Engine.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 
 //---------------------------------------------------------------------------
-// Player Constructor
+// CONSTRUCTOR
 //---------------------------------------------------------------------------
 APlayerCharacter::APlayerCharacter()
 {
@@ -24,6 +25,27 @@ APlayerCharacter::APlayerCharacter()
 	FollowCamera->SetupAttachment(RootComponent);
 	FollowCamera->bUsePawnControlRotation = true;
 
+	// Spring Arm for the render texture
+	SpringArmRenderMap = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmRenderMap"));
+	SpringArmRenderMap->SetRelativeRotation(FRotator(-90,0,0));
+	SpringArmRenderMap->bInheritPitch = false;
+	SpringArmRenderMap->bInheritRoll = false;
+	SpringArmRenderMap->bInheritYaw = false;
+	SpringArmRenderMap->AttachTo(RootComponent);
+
+	// Map Render texture
+	SceneCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("SceneCapture"));
+	SceneCapture->ProjectionType = ECameraProjectionMode::Orthographic;
+	SceneCapture->OrthoWidth = 2000;
+	SceneCapture->AttachTo(SpringArmRenderMap);
+
+	// Sprite for the gps location
+	SpriteComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("SpriteComponent"));
+	SpriteComponent->SetRelativeLocation(FVector(24,0, 26));
+	SpriteComponent->AttachTo(SpringArmRenderMap);
+
+	SplineComponent = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComponent"));
+	
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.f, 0.0f);
@@ -40,7 +62,7 @@ APlayerCharacter::APlayerCharacter()
 //---------------------------------------------------------------------------
 void APlayerCharacter::BeginPlay()
 {
-	Super::BeginPlay();	
+	Super::BeginPlay();
 }
 
 //---------------------------------------------------------------------------
@@ -70,8 +92,13 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	// Player Actions
 	PlayerInputComponent->BindAction("Run", IE_Pressed, this, &APlayerCharacter::StartRunning);
 	PlayerInputComponent->BindAction("Run", IE_Released, this, &APlayerCharacter::StopRunning);
+
+	PlayerInputComponent->BindAction("MobileGps", IE_Pressed, this, &APlayerCharacter::MobileGpsOpen);
 }
 
+//---------------------------------------------------------------------------
+// PUBLIC
+//---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 //	PRIVATE
 //---------------------------------------------------------------------------
@@ -83,7 +110,7 @@ void APlayerCharacter::IsPlayerRunning()
 	if (PlayerIsRunning)
 	{
 		// Substract the stamina from the player while running
-		CurrentPlayerStamina = FMath::Clamp((CurrentPlayerStamina - 1), 0, PlayerMaxStamina);
+		CurrentPlayerStamina = FMath::Clamp((CurrentPlayerStamina - 1.0f), 0.0f, PlayerMaxStamina);
 
 		// Stop Running and add delay to the charge of the stamina
 		if (CurrentPlayerStamina == 0)
@@ -97,12 +124,12 @@ void APlayerCharacter::IsPlayerRunning()
 		// we need to delay the charge of the stamina
 		if (PlayerDelayStamina < 0)
 		{
-			PlayerDelayStamina = +FMath::Clamp((PlayerDelayStamina + 1), PlayerMinStamina, PlayerMaxStamina);
+			PlayerDelayStamina = +FMath::Clamp((PlayerDelayStamina + 1.0f), PlayerMinStamina, PlayerMaxStamina);
 		}
 		// If the delay stamina is 0 we can start charging the stamina of the player
 		else if (PlayerDelayStamina >= 0)
 		{
-			CurrentPlayerStamina =+ FMath::Clamp((CurrentPlayerStamina +1), PlayerMinStamina, PlayerMaxStamina);
+			CurrentPlayerStamina =+ FMath::Clamp((CurrentPlayerStamina +1.0f), PlayerMinStamina, PlayerMaxStamina);
 		}
 	}
 }

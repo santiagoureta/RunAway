@@ -5,11 +5,15 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/SpotLightComponent.h"
 #include "Components/SphereComponent.h"
+#include "LevelSystemIlumination.h"
 #include "Engine/World.h"
 #include "Engine/StaticMesh.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Kismet/GameplayStatics.h"
 
+//---------------------------------------------------------------------------
+//	CONSTRUCTOR
+//---------------------------------------------------------------------------
 ALightObject::ALightObject()
 {
 	PrimaryActorTick.bCanEverTick = true;

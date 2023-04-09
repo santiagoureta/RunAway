@@ -57,6 +57,8 @@ struct FGraphLevelObject : public FTableRowBase
 		int32 LightTypeId;
 };
 
+class Main_Utilites;
+
 UCLASS()
 class RUNAWAY_API ALevelStreamerActor : public AActor
 {
@@ -64,14 +66,23 @@ class RUNAWAY_API ALevelStreamerActor : public AActor
 
 public:
 
-	// Sets default values for this actor's properties
+	//! Sets default values for this actor's properties
 	ALevelStreamerActor();
 
-	// Called when the game starts to create the stream level
+	//! Called when the game starts to create the stream level
 	virtual bool CreateStreamLevel();
 
-	// Utility function to merge the data bases to create the map
+	//! Utility function to merge the data bases to create the map
 	virtual void MergeDataTables();
+
+	//!
+	FVector PlayerLocationToSpawn;
+
+	//!
+	FVector EnemyLocationToSpawn;
+
+	//!
+	FVector PlayerFinalLocation;
 
 protected:
 
@@ -88,6 +99,9 @@ private:
 
 	// Utility function to Load each stream level to the graph
 	virtual void LoadStreamLevel(FGraphLevelObject* graphLevelRef, int count);
+
+	// Utility function that saved the location to spawn the enemy and the player
+	virtual void StoreSpawnPositions(MainUtilities::LevelTypeEnum LevelType, FVector Location);
 
 	// Property to read values from the level streamer data base
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = DataBase, meta = (AllowPrivateAccess = "true"))

@@ -42,6 +42,9 @@ void ALevelStreamerActor::BeginPlay()
 }
 
 //---------------------------------------------------------------------------
+//	PUBLIC
+//---------------------------------------------------------------------------
+
 //---------------------------------------------------------------------------
 // Creates the graph for each level streamer that need to be loaded into the world
 //---------------------------------------------------------------------------
@@ -118,6 +121,8 @@ void ALevelStreamerActor::MergeDataTables()
 //---------------------------------------------------------------------------
 //	PRIVATE
 //---------------------------------------------------------------------------
+
+//---------------------------------------------------------------------------
 // Load the information needed for the level to manage the size of the graph
 //---------------------------------------------------------------------------
 void ALevelStreamerActor::LoadGraphSize(FLevelStreamerObject* LevelStreamerObject)
@@ -179,6 +184,8 @@ void ALevelStreamerActor::LoadStreamLevel(FGraphLevelObject* graphLevelRef, int 
 	float rotation_Y = graphLevelRef->Rotation_Y;
 	float rotation_Z = graphLevelRef->Rotation_Z;
 
+	MainUtilities::LevelTypeEnum levelType = static_cast<MainUtilities::LevelTypeEnum> (graphLevelRef->LevelType);
+	
 	// The information of our level we want to load
 	ULevelStreaming* level = UGameplayStatics::GetStreamingLevel(OwningWorld, *levelToLoad);
 	
@@ -203,6 +210,9 @@ void ALevelStreamerActor::LoadStreamLevel(FGraphLevelObject* graphLevelRef, int 
 		FVector position;
 		position.Set(NewPosition_X, NewPosition_Y, 0);
 
+		// check where we need to spawn the enemy && the player
+		StoreSpawnPositions(levelType, position);
+		
 		// Transform the position for the instance
 		FTransform newTransform;
 		newTransform.SetToRelativeTransform(levelRef->LevelTransform);
@@ -228,5 +238,30 @@ void ALevelStreamerActor::LoadStreamLevel(FGraphLevelObject* graphLevelRef, int 
 	{
 		// probably the name of the level we are currently loading is missing or isnt created
 		UE_LOG(LogTemp, Warning, TEXT("Failed to load the: %s level name or this is intentionally"), *levelToLoad);
+	}
+}
+
+//---------------------------------------------------------------------------
+// Store the spawn locations for the enemy and the player
+//---------------------------------------------------------------------------
+void ALevelStreamerActor::StoreSpawnPositions(MainUtilities::LevelTypeEnum LevelType, FVector Location)
+{
+	switch (LevelType)
+	{
+		case MainUtilities::LEVEL_TYPE_PLAYER_SPAWN:
+			Location.Z += 100;
+			PlayerLocationToSpawn = Location;
+			break;
+
+		case MainUtilities::LEVEL_TYPE_ENEMY_SPAWN:
+			Location.Z += 100;
+			EnemyLocationToSpawn = Location;
+			break;
+
+		case MainUtilities::LEVEL_TYPE_FINAL_LOCATION:
+			PlayerFinalLocation = Location;
+			break;
+		default:
+			break;
 	}
 }
