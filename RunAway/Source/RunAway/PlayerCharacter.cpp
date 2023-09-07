@@ -41,7 +41,7 @@ APlayerCharacter::APlayerCharacter()
 
 	// Sprite for the gps location
 	SpriteComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("SpriteComponent"));
-	SpriteComponent->SetRelativeLocation(FVector(24,0, 26));
+	//SpriteComponent->SetRelativeLocation(FVector(24,0, 26));
 	SpriteComponent->AttachTo(SpringArmRenderMap);
 
 	SplineComponent = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComponent"));
